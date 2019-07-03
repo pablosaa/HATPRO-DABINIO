@@ -11,22 +11,29 @@ This repository contains simple examples to use the library from GNU/Octave and 
 
 ## Usage
 ### Stand-alone
+Stand alone executables can be produced by linking the static (``lib/libhatpro.a``) or dynamic (``lib/libhatpro.so``) library.
+For instance, in repository directory ``examples/windplanner/`` there is a small stand-alone program which gets a ``.MET`` file as input and outputs the 10 minutes average of wind direction and speed:
+
+    > ./getMETwinddir /home/user/data/190522.MET
+    > 146.201 7.80501
 
 ### GNU/Octave & MATLAB
 There are two main wrapper functions for Octave & MATLAB, one is to read binary data files and the other to write into files alike the original binary files produced by the HATPRO radiometer.
 
 To read data files, the usage is as follow:
 
-    > BRT = call_hatpro;
-    > BRT = call_hatpro('/HATPRO/data/Y2018/M09/D13/180913.BRT');
+    > BRT = read_hatpro;
+    > BRT = read_hatpro('/HATPRO/data/Y2018/M09/D13/180913.BRT');
 
 To write a binary file, the usage is as follow:
 
-    > mimic_hatpro(BRT,'/newdata/hatprofile.BRT');
+    > write_hatpro(BRT,'/newdata/hatprofile.BRT');
+    
 where the first argument ``BRT`` is a structure containing the data to storage and the second argument is a string containing the full path file name for the file where to store the data.
 INPORTANT: the file name's extension must comply with the data file names used by RPG, for example ``.BRT``, ``.BLB``,``.MET``, etc.
 
-### Wrapper for FORTRAN
+### Binding for FORTRAN
+Work in progress...
 
 ## Compatibility
 ### Software
