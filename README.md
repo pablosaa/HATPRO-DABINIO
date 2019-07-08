@@ -61,7 +61,27 @@ To write a binary file, a data structure as shown above needs to be created firs
 where the first argument ``BRT`` is a structure containing the data to storage and the second argument is a string containing the full path for the file where to store the data.
 __INPORTANT__: the file name's extension must comply with the data file names used by RPG, for example ``.BRT``, ``.BLB``,``.MET``, etc. Otherwise the data structure won't be in complaint with the requared data file format and the function will return an error.
 
-### Binding for FORTRAN
+### Binding with Python
+The binding with Python is done via SWIG, therefore a dynamic library is created by runinng the make file as:
+
+    > make python
+    
+and the ``_hatpro.so`` module will be created in the directory ``lib/python`` which can be used from python as any other module:
+
+    > python3.5
+    Python 3.5.2 (default, Nov 12 2018, 13:43:14) 
+    [GCC 5.4.0 20160609] on linux
+    Type "help", "copyright", "credits" or "license" for more information.
+    >>> import hatpro
+    >>> help(hatpro)
+    >>> brt = hatpro.BRT_var()
+    >>> hatpro.BRT_var.Read_BRTfile(brt, "090905.BRT")
+    >>> hatpro.BRT.var.Print_Data(brt)
+    >>> hatpro.WhatAmI(brt.code)
+     % BLBT code is : 567845848
+
+### Binding with FORTRAN
+Some times when HATPRO data is used as input for some high performance computing e.g. retrievals, data assimilation or model initialization, then it is useful to call the library from stablished Fortran programs which are mostly the case for HPC. The binding is done via Fortran intrinsic module ctypes. 
 Work in progress...
 
 
