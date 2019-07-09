@@ -162,7 +162,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     memcpy(BRT.BRTMax, BRTMax, NF*sizeof(BRTMax[0]));
   }
   // Converting Calendar Date to TimeSeconds since epoc:
-  BRT.TimeSec = hatpro::Date2TimeSec(myTIME, ND);
+  hatpro::Date2TimeSec(myTIME, ND, BRT.TimeSec);
   
   // Converting Elevation and Azimuth into Angular array (BRT.Ang):
   hatpro::ElAzi2Angular(BRT.ELV, BRT.AZI, code==BLBcode?NA:ND, BRT.Ang);

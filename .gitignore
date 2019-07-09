@@ -4,8 +4,9 @@
 # Compiled Object files
 *.slo
 *.lo
-# *.o
+*.o
 *.obj
+build/
 
 # Precompiled Headers
 *.gch

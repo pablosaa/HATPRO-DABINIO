@@ -186,8 +186,8 @@ namespace hatpro {
   int WhatAmI(int);
   void minmax_value(float **, int, int, int, float [], float []);
   // Subroutine to convert TimeSeconds from 2001.1.1 00:00:00 to Calendar Format:
-  void TimeSec2Date(int [], int, float [][6]);
-  int *Date2TimeSec(float **, int);
+  void TimeSec2Date(int [], int, float **);
+  void Date2TimeSec(float **, int, int *);
   // --------------------------------------------------
 
 } // end of namespace

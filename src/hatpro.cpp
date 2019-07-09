@@ -346,7 +346,9 @@ void hatpro::MET_var::Create_BinFile(const char *foutname){
 // **** Subroutine to print BRT Hatpro data:
 void hatpro::BRT_var::Print_Data(){
   hatpro::WhatAmI(code);
-  float date[Ndata][6];
+  float **date;
+  date = new float*[Ndata];
+  for(int i=0; i<Ndata; ++i) date[i] = new float[6];
 
   TimeSec2Date(TimeSec, Ndata, date);
 
@@ -373,8 +375,12 @@ void hatpro::BRT_var::Print_Data(){
     cout<<endl;
   }
 
-  // int *TT = hatpro::Date2TimeSec(mydate, Ndata);
-
+  int *TT;
+  TT = new int[Ndata];
+  hatpro::Date2TimeSec(date, Ndata, TT);
+  for(int i=0; i<5; ++i) cout<<TT[i]<<endl;
+  delete [] TT;
+  delete [] date;
   // float **Datum;
   // Datum = TimeSec2Date(TT, Ndata);
   // for(int i=0;i<10;++i) cout<<Datum[i][0]<<" "<<Datum[i][1]<<" "<<Datum[i][2]<<" "<<Datum[i][3]<<" "<<Datum[i][4]<<" "<<Datum[i][5]<<" "<<endl;
@@ -386,7 +392,8 @@ void hatpro::BRT_var::Print_Data(){
 // *** Subroutine to print Profile Hatpro data:
 void hatpro::PRO_var::Print_Data(){
   if(hatpro::WhatAmI(code)) return;
-  float date[Ndata][6];
+  float **date;
+  
   TimeSec2Date(TimeSec, Ndata, date);
   cout<<"% Printing data with "<<Nalt<<" altitudes and "<<Ndata<<" data points"<<endl;
   cout<<setprecision(2)<<setfill(' ')<<fixed;
@@ -411,7 +418,7 @@ void hatpro::PRO_var::Print_Data(){
 // *** Subroutine to print Meteorological Hatpro data:
 void hatpro::MET_var::Print_Data(){
   if(hatpro::WhatAmI(code)) return;
-  float date[Ndata][6];
+  float **date;
   TimeSec2Date(TimeSec, Ndata, date);
   cout<<"% Printing data with "<<Ndata<<" data points"<<endl;
   cout<<"Time_stamp  | "<<" Pressure |  Wind_sp | "<<" Temp | Wind_dir | "<<" RH  | RR"<<endl;
@@ -565,7 +572,7 @@ int hatpro::GetExtFromFile(const char *infile){
 
 
 // General function to convert RPG TimeSec to Calendar Date
-void hatpro::TimeSec2Date(int *TimeSec, int N, float date[][6]){
+void hatpro::TimeSec2Date(int *TimeSec, int N, float **date){
   time_t basetime, acttime;
   struct tm * time0, *timeF;
   //float **date; 
@@ -597,12 +604,12 @@ void hatpro::TimeSec2Date(int *TimeSec, int N, float date[][6]){
 // ---
 // *****************************************************
 // Funtion to convert Calendar Date into RPG TimeSec:
-int *hatpro::Date2TimeSec(float **date, int ND){
-  int *TimeSec;
+void hatpro::Date2TimeSec(float **date, int ND, int *TimeSec){
+  //int *TimeSec;
   struct tm * timeIN;
   time_t base_time, rpg_time = time(nullptr);
   timeIN = gmtime(&rpg_time);
-  TimeSec = new int[ND];
+  //TimeSec = new int[ND];
 
   time(&base_time);
   timeIN = gmtime(&base_time);
@@ -626,7 +633,7 @@ int *hatpro::Date2TimeSec(float **date, int ND){
     TimeSec[i] = (int) rpg_time;
   }
   
-  return TimeSec;
+  return;
 }
 // -----------------------------------------------------
 
