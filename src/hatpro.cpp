@@ -346,8 +346,9 @@ void hatpro::MET_var::Create_BinFile(const char *foutname){
 // **** Subroutine to print BRT Hatpro data:
 void hatpro::BRT_var::Print_Data(){
   hatpro::WhatAmI(code);
-  float **date;
-  date = TimeSec2Date(TimeSec, Ndata);
+  float date[Ndata][6];
+
+  TimeSec2Date(TimeSec, Ndata, date);
 
   if(code!=METcode)
     cout<<"% Printing data with "<<Nfreq<<" frequencies and "<<Ndata<<" data points"<<endl;
@@ -385,8 +386,8 @@ void hatpro::BRT_var::Print_Data(){
 // *** Subroutine to print Profile Hatpro data:
 void hatpro::PRO_var::Print_Data(){
   if(hatpro::WhatAmI(code)) return;
-  float **date; //[Ndata][6];
-  date = TimeSec2Date(TimeSec, Ndata);
+  float date[Ndata][6];
+  TimeSec2Date(TimeSec, Ndata, date);
   cout<<"% Printing data with "<<Nalt<<" altitudes and "<<Ndata<<" data points"<<endl;
   cout<<setprecision(2)<<setfill(' ')<<fixed;
   if(code==TPCcode||code==TPBcode||code==HPCcode||code==HPCcode+1){
@@ -410,8 +411,8 @@ void hatpro::PRO_var::Print_Data(){
 // *** Subroutine to print Meteorological Hatpro data:
 void hatpro::MET_var::Print_Data(){
   if(hatpro::WhatAmI(code)) return;
-  float **date; //[Ndata][6];
-  date = TimeSec2Date(TimeSec, Ndata);
+  float date[Ndata][6];
+  TimeSec2Date(TimeSec, Ndata, date);
   cout<<"% Printing data with "<<Ndata<<" data points"<<endl;
   cout<<"Time_stamp  | "<<" Pressure |  Wind_sp | "<<" Temp | Wind_dir | "<<" RH  | RR"<<endl;
   cout<<setprecision(2)<<setfill(' ')<<fixed;
@@ -564,11 +565,11 @@ int hatpro::GetExtFromFile(const char *infile){
 
 
 // General function to convert RPG TimeSec to Calendar Date
-float **hatpro::TimeSec2Date(int *TimeSec, int N){
+void hatpro::TimeSec2Date(int *TimeSec, int N, float date[][6]){
   time_t basetime, acttime;
   struct tm * time0, *timeF;
-  float **date; 
-  date = new float*[N];
+  //float **date; 
+  //date = new float*[N];
   time(&basetime);
   time0 = gmtime(&basetime);
   time0->tm_year = 101;
@@ -580,7 +581,7 @@ float **hatpro::TimeSec2Date(int *TimeSec, int N){
   basetime = mktime(time0)-timezone;
 
   for(int i=0;i<N;i++){
-    date[i] = new float[6];
+    //date[i] = new float[6];
     acttime = basetime+TimeSec[i];
     timeF = gmtime(&acttime);
     date[i][0] = (float) (1900+timeF->tm_year);
@@ -591,7 +592,7 @@ float **hatpro::TimeSec2Date(int *TimeSec, int N){
     date[i][5] = (float) timeF->tm_sec;
     //cout<<TimeSec[i]<<": "<<1900+timeF->tm_year<<"."<<1+timeF->tm_mon<<"."<<timeF->tm_mday<<" "<<timeF->tm_hour<<":"<<timeF->tm_min<<":"<<timeF->tm_sec<<"--->"<<asctime(timeF)<<endl;
   }
-  return date;
+  return;
 }
 // ---
 // *****************************************************

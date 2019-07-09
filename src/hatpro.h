@@ -186,7 +186,7 @@ namespace hatpro {
   int WhatAmI(int);
   void minmax_value(float **, int, int, int, float [], float []);
   // Subroutine to convert TimeSeconds from 2001.1.1 00:00:00 to Calendar Format:
-  float **TimeSec2Date(int [], int);
+  void TimeSec2Date(int [], int, float [][6]);
   int *Date2TimeSec(float **, int);
   // --------------------------------------------------
 
@@ -197,25 +197,6 @@ namespace hatpro {
 // end of .H file
 
 
-// Reading Binary data functions:
-//MWR_var Read_BRT_BinData(const char *);
-/*  BLB_var Read_BLB_BinFile(const char *); */
-/*  MET_var Read_MET_BinFile(const char *); */
-/*  TPB_var Read_TPB_BinFile(const char *); */
-/*  HP_var  Read_HPC_BinFile(const char *); */
- 
-/* // Creating Synthetic data routines: */
-/*  void Create_BRT_BinFile(const char *, MWR_var *); */
-/*  void Create_BLB_BinFile(const char *, BLB_var); */
-/*  void Create_MET_BinFile(const char *, MET_var); */
-/*  // Data Printing routines (for DB purposes) */
-/*  void Print_BLB_Data(BLB_var ); */
-/*  void Print_Hatpro_Data(MWR_var *); */
-/*  // Retrieval functions and routines: */
-/* RET_var Bayesian_Function(int, float[], float[]); */
-/* void PrintRetrieval(RET_var); */
-/* void SaveRetrieval(char *, MWR_var, RET_var); */
-/* // others */
-/*  int Load_DataBase(char *); */
-/*  int Select_SubSet(MWR_var); //(float*, float*, float); */
+
+
 
