@@ -350,7 +350,7 @@ void hatpro::BRT_var::Print_Data(){
   date = new float*[Ndata];
   for(int i=0; i<Ndata; ++i) date[i] = new float[6];
 
-  TimeSec2Date(TimeSec, Ndata, date);
+  TimeSec2Date(Ndata, TimeSec, Ndata, date);
 
   if(code!=METcode)
     cout<<"% Printing data with "<<Nfreq<<" frequencies and "<<Ndata<<" data points"<<endl;
@@ -380,7 +380,7 @@ void hatpro::BRT_var::Print_Data(){
   hatpro::Date2TimeSec(date, Ndata, TT);
   for(int i=0; i<5; ++i) cout<<TT[i]<<endl;
   delete [] TT;
-  delete [] date;
+  //delete [] date;
   // float **Datum;
   // Datum = TimeSec2Date(TT, Ndata);
   // for(int i=0;i<10;++i) cout<<Datum[i][0]<<" "<<Datum[i][1]<<" "<<Datum[i][2]<<" "<<Datum[i][3]<<" "<<Datum[i][4]<<" "<<Datum[i][5]<<" "<<endl;
@@ -394,7 +394,7 @@ void hatpro::PRO_var::Print_Data(){
   if(hatpro::WhatAmI(code)) return;
   float **date;
   
-  TimeSec2Date(TimeSec, Ndata, date);
+  TimeSec2Date(Ndata, TimeSec, Ndata, date);
   cout<<"% Printing data with "<<Nalt<<" altitudes and "<<Ndata<<" data points"<<endl;
   cout<<setprecision(2)<<setfill(' ')<<fixed;
   if(code==TPCcode||code==TPBcode||code==HPCcode||code==HPCcode+1){
@@ -419,7 +419,7 @@ void hatpro::PRO_var::Print_Data(){
 void hatpro::MET_var::Print_Data(){
   if(hatpro::WhatAmI(code)) return;
   float **date;
-  TimeSec2Date(TimeSec, Ndata, date);
+  TimeSec2Date(Ndata, TimeSec, Ndata, date);
   cout<<"% Printing data with "<<Ndata<<" data points"<<endl;
   cout<<"Time_stamp  | "<<" Pressure |  Wind_sp | "<<" Temp | Wind_dir | "<<" RH  | RR"<<endl;
   cout<<setprecision(2)<<setfill(' ')<<fixed;
@@ -572,7 +572,7 @@ int hatpro::GetExtFromFile(const char *infile){
 
 
 // General function to convert RPG TimeSec to Calendar Date
-void hatpro::TimeSec2Date(int *TimeSec, int N, float **date){
+void hatpro::TimeSec2Date(int M, int *TimeSec, int N, float **date){
   time_t basetime, acttime;
   struct tm * time0, *timeF;
   //float **date; 
@@ -599,6 +599,7 @@ void hatpro::TimeSec2Date(int *TimeSec, int N, float **date){
     date[i][5] = (float) timeF->tm_sec;
     //cout<<TimeSec[i]<<": "<<1900+timeF->tm_year<<"."<<1+timeF->tm_mon<<"."<<timeF->tm_mday<<" "<<timeF->tm_hour<<":"<<timeF->tm_min<<":"<<timeF->tm_sec<<"--->"<<asctime(timeF)<<endl;
   }
+  
   return;
 }
 // ---

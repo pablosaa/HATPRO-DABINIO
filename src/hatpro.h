@@ -181,12 +181,11 @@ namespace hatpro {
   //    Definition of AUX FUNCTIONS and SUBROUTINES:
   void Angular2ElAzi(float , float &, float &);
   void ElAzi2Angular(float *, float *, int, float *);
-  std::string GetNewFile(int, const char *);
   int GetExtFromFile(const char *);
   int WhatAmI(int);
   void minmax_value(float **, int, int, int, float [], float []);
   // Subroutine to convert TimeSeconds from 2001.1.1 00:00:00 to Calendar Format:
-  void TimeSec2Date(int [], int, float **);
+  void TimeSec2Date(int, int* , int, float **);
   void Date2TimeSec(float **, int, int *);
   // --------------------------------------------------
 
