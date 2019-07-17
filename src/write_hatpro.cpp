@@ -34,18 +34,18 @@ void mexFunction(int nlhs, mxArray *plhs[],
   if(!mxIsStruct(prhs[0]))
     mexErrMsgTxt("First argument needs to be a structure!");
 
-  char *filen;
+  char *filen = NULL;
+  int code = -1;
   if(mxIsChar(prhs[1])){
     size_t FileLength = mxGetN(prhs[1])+1;
     filen = (char *) mxCalloc(FileLength, sizeof(char));
     mxGetString(prhs[1], filen, FileLength);
+    // Getting the HATPRO's code corresponding for file:
+    code = hatpro::GetExtFromFile(filen);
+    if(code<=0)
+      mexErrMsgTxt("Please introduce a file with a extension supported by RPG GmbH.");
   }
   else mexErrMsgTxt("Second argument needs to be a string!");
-
-
-  // Getting the HATPRO's code corresponding for file:
-  int code = hatpro::GetExtFromFile(filen);
-  if(code<=0) mexErrMsgTxt("Please introduce a file with a extension supported by RPG GmbH.");
 
   hatpro::WhatAmI(code);
   bool BRTflag = false;
@@ -74,12 +74,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
   hatpro::PRO_var PRO(ND, NH);
   
   float BRTMin[NF], BRTMax[NF];
-  float PROmin, PROmax;
-  float **myTIME; // auxiliary array to collect time array
+
+  float **myTIME = NULL; // auxiliary array to collect time array
 
   /* Iterating over Fields, starting at 1 because first field
      is NUM_ELEMENTS already read */
-  for(int i=1; i<KAKES.NFields; ++i){
+  for(uint i=1; i<KAKES.NFields; ++i){
 
     TMP = mxGetField(prhs[0],(mwIndex) 0, KAKES.FieldsName[i]);
   

@@ -475,52 +475,59 @@ int hatpro::WhatAmI(int code){
   switch(code){
   case BRTcode:
   case BRTcode-1:
-    cout<<"% MWR code is : "<<code<<endl;
+    cout<<"% BRT file, Brightness Temperature";
     break;
   case ATNcode:
-    cout<<"% ATN code is : "<<code<<endl;
+    cout<<"% ATN file, Atmospheric Attenuation";
     break;
+  case BLBcode-1:
   case BLBcode:
-    cout<<"% BLBT code is : "<<code<<endl;
+    cout<<"% BLB file, Boundary Layer Brightness Temperature";
+    break;
+  case WVLcode:
+    cout<<"% WVL file, Water Vapour Line";
     break;
   case OLCcode:
-    cout<<"% OLC code is : "<<code<<endl;
+    cout<<"% OLC file, Oxygen Line";
     break;
   case TPCcode:
-    cout<<"% TPC code is : "<<code<<endl;
+    cout<<"% TPC file, Tropospheric Temperature Profile";
     break;
   case TPBcode:
-    cout<<"% TPB code is : "<<code<<endl;
+    cout<<"% TPB file, Boundary Layer Temperature Profile";
     break;
   case HPCcode:
+    cout<<"% HPC file, Humidity Profile without RH";
   case HPCcode+1:
-    cout<<"% HPC code is : "<<code<<endl;
+    cout<<"% HPC file, Humidity Profile with RH";
     break;
   case LPRcode:
-    cout<<"% LPR code is : "<<code<<endl;
+    cout<<"% LPR file, Liquid Water Profile";
     break;
+  case METcode-1:
   case METcode:
-    cout<<"% MET code is : "<<code<<endl;
+    cout<<"% MET file, Meteorological Sensors";
     break;
   case IWVcode:
-    cout<<"% IWV code is : "<<code<<endl;
+    cout<<"% IWV file, Integrated Water Vapour";
     break;
   case LWPcode:
-    cout<<"% LWP code is : "<<code<<endl;
+    cout<<"% LWP file, Liquid Water Path";
     break;
   case BLHcode:
-    cout<<"% BLH code is : "<<code<<endl;
+    cout<<"% BLH file, Boundary Layer Height";
     break;
   case CBHcode:
-    cout<<"% CBH code is : "<<code<<endl;
+    cout<<"% CBH file, Cloud Base Height";
     break;
   case STAcode:
-    cout<<"% STA code is : "<<code<<endl;
+    cout<<"% STA file, Stability indices";
     break;
   default:
     cout<<"Error to identify code: "<<code<<endl;
     return(-1);
   }
+  cout<<" with code: "<<code<<endl;
   return(0);
 }
 // -----

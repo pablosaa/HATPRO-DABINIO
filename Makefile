@@ -53,9 +53,7 @@ $(TMP_PATH)/test_hatprolib.o: $(SRC_PATH)/test_hatprolib.cpp $(SRC_PATH)/hatpro.
 
 octave: $(SRC_PATH)/read_hatpro.cpp $(LIB_PATH)/libhatpro.so $(SRC_PATH)/write_hatpro.cpp 
 	$(OCT_GCC) --mex $(SRC_PATH)/read_hatpro.cpp -o $(BIN_PATH)/read_hatpro.mex "-Wl,-rpath=$(LIB_PATH)" -L$(LIB_PATH) -lhatpro
-	rm $(HOM_PATH)/read_hatpro.o
 	$(OCT_GCC) --mex $(SRC_PATH)/write_hatpro.cpp -o $(BIN_PATH)/write_hatpro.mex "-Wl,-rpath=$(LIB_PATH)" -L$(LIB_PATH) -lhatpro
-	rm $(HOM_PATH)/write_hatpro.o
 
 matlab: $(SRC_PATH)/read_hatpro.cpp $(LIB_PATH)/libhatpro.a $(SRC_PATH)/write_hatpro.cpp 
 	$(MEX_GCC) $(SRC_PATH)/read_hatpro.cpp -outdir $(BIN_PATH) -L$(LIB_PATH) -l:libhatpro.a

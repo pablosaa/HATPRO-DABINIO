@@ -54,23 +54,23 @@ mxArray *DataFile2MexStruct(const char *FileName){
   mwSize aDims = IsBRT?BRT.Nang:0;  // angle
   mwSize fDims = IsBRT?BRT.Nfreq:0;  // frequency
 
-  int NELEN[4] = {tDims, fDims, aDims, hDims};
+  mwSize NELEN[4] = {tDims, fDims, aDims, hDims};
   
   // Converting RPG time format to year,month,day,hour,min,secs:
   float **date;
   date = new float*[tDims];
   for(int i=0; i<tDims; ++i) date[i] = new float[6];
 
-  hatpro::TimeSec2Date(IsBRT?BRT.TimeSec:PRO.TimeSec, tDims, date);
+  hatpro::TimeSec2Date(tDims, IsBRT?BRT.TimeSec:PRO.TimeSec, tDims, date);
 
-  for(int i=0;i<SU.NFields;++i) cout<<SU.FieldsName[i]<<" ";  
+  for(size_t i=0;i<SU.NFields;++i) cout<<SU.FieldsName[i]<<" ";  
   cout<<endl;
 
   // Creating the structure to put the set of variable fields:
   mxArray *stru = mxCreateStructMatrix(1, 1, SU.NFields, (const char **) SU.FieldsName);
 
-  for(int i=0;i<SU.NFields;++i){
-    mxClassID  myID;
+  for(size_t i=0;i<SU.NFields;++i){
+    mxClassID  myID = mxDOUBLE_CLASS;
     mwSize xDim=0, yDim=1, zDim=1;   // temporal dimensions
     mxArray *TMP = NULL;  
     float *pointt=NULL;
@@ -306,10 +306,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
   }   // end switch
 
   cout<<"starting to read "<<NTotalFiles<<" input files..."<<endl;
-  if(NTotalFiles>1)  plhs[0] = mxCreateCellMatrix(NTotalFiles,1);
+  if(MULTIFILES)  plhs[0] = mxCreateCellMatrix(NTotalFiles,1);
 
   mxArray *stru2;
-  for(int i=0;i<NTotalFiles;++i){
+  for(uint i=0;i<NTotalFiles;++i){
     stru2 = DataFile2MexStruct(InFiles.at(i).c_str());
     
     if(NTotalFiles>1) mxSetCell(plhs[0],i,stru2);

@@ -61,7 +61,7 @@ MEXSTRUCT::MEXSTRUCT(int code){
   NFields = idx.size() + 1;
   FieldsName = (const char**) calloc(NFields, sizeof(*FieldsName));
   FieldsName[0] = "NUM_ELEMENTS";
-  for(int i=1;i<NFields;++i) FieldsName[i] = ListName[idx.at(i-1)];
+  for(size_t i=1;i<NFields;++i) FieldsName[i] = ListName[idx.at(i-1)];
 }
 
 MEXSTRUCT::~MEXSTRUCT(void){
@@ -115,9 +115,9 @@ int GetInputFile_MWR(vector<string> &InFiles){
     strLength = mxGetN(OUTVAR[0])+1;
     mxGetString(OUTVAR[0],filen+mxGetN(OUTVAR[1]),strLength);
     InFiles.push_back(filen);
+    mexPrintf("HATPRO file chosen: %s\n",filen);
   }
   
-  mexPrintf("HATPRO file chosen: %s\n",filen);
   return(status);
 }
 // ================ End of HATPRO Input File Dialog-Box ========================
