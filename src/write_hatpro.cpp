@@ -108,6 +108,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
       BRT.RF = (int *) mxGetData(TMP);
 
     if(!strcmp(KAKES.FieldsName[i],"TB")){
+      mwSize tempNN = mxGetNumberOfDimensions(TMP);
+      const mwSize *tempdim = mxGetDimensions(TMP);
+      for(mwSize kk=0; kk<tempNN; ++kk) cout<<"TB dim is "<<tempdim[kk]<<endl;
       for(int x=0; x<ND; ++x)
 	for(int y=0; y<NF; ++y)
 	  for(int z=0; z<NA+1; ++z)

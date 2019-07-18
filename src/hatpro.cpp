@@ -353,7 +353,7 @@ void hatpro::BRT_var::Print_Data(){
   TimeSec2Date(Ndata, TimeSec, Ndata, date);
 
   if(code!=METcode)
-    cout<<"% Printing data with "<<Nfreq<<" frequencies and "<<Ndata<<" data points"<<endl;
+    cout<<"% Printing data with "<<Nfreq<<" frequencies, "<<Nang<<" angles and "<<Ndata<<" data points"<<endl;
   else
     cout<<"% Printing data with "<<Nfreq<<" variables "<<endl;
 
@@ -375,12 +375,7 @@ void hatpro::BRT_var::Print_Data(){
     cout<<endl;
   }
 
-  int *TT;
-  TT = new int[Ndata];
-  hatpro::Date2TimeSec(date, Ndata, TT);
-  for(int i=0; i<5; ++i) cout<<TT[i]<<endl;
-  delete [] TT;
-  //delete [] date;
+  delete [] date;
   // float **Datum;
   // Datum = TimeSec2Date(TT, Ndata);
   // for(int i=0;i<10;++i) cout<<Datum[i][0]<<" "<<Datum[i][1]<<" "<<Datum[i][2]<<" "<<Datum[i][3]<<" "<<Datum[i][4]<<" "<<Datum[i][5]<<" "<<endl;

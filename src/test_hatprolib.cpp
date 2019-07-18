@@ -16,9 +16,9 @@ int Func(const char *infile, T &DATA){
 
 int main(int argc, char *argv[]){
 
-int Nlines;  
-const char *fileBRT;
-const char filename[] = "/home/pablo/UiB/data/HATPRO/Y2015/M05/D23/150523.MET";
+  int Nlines;  
+  const char *fileBRT;
+  const char filename[] = "/home/pablo/UiB/data/HATPRO/Y2015/M05/D23/150523.MET";
   const char fname[] = "/home/pablo/UiB/data/HATPRO/Y2015/M05/D23/150523.HPC";
   const char newname[] = "/tmp/raquelinha.MET";
   hatpro::PRO_var data;
@@ -52,7 +52,7 @@ const char filename[] = "/home/pablo/UiB/data/HATPRO/Y2015/M05/D23/150523.MET";
     {
       //output = Func<hatpro::BRT_var>(fileBRT, tb);
       output = Func<decltype(tb)>(fileBRT, tb);
-      cout<<tb.Ndata;
+
       float BRTmin[tb.Nfreq], BRTmax[tb.Nfreq];
       hatpro::minmax_value(tb.TB, tb.Ndata, tb.Nfreq, tb.Nang+1, BRTmin, BRTmax);
       cout<<"MINIMUM::::"<<endl;
