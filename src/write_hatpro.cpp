@@ -5,17 +5,16 @@
 //    > write_hatpro(BRT,'/data/myhatpro/file_basename');
 //    > status = write_hatpro(BRT,'/data/myhatpro/file_basename');
 //
-// (c) 2018 Pablo Saavedra G. (pablo.saa@uib.no)
+// (c) 2018, Pablo Saavedra G. (pablo.saa@uib.no)
 // Geophysical Institute, University of Bergen
 //
-// SEE LICENCE.TXT
+// See LICENCE
 // ********************************************************************
 
 // TODO:
 // * make subroutine to check whether all structure fields are present
-// * test for MET files
+// * test for dimensions compativility
 // * implement for Profiles Create_BINfile subroutine in hatpro.cpp
-// * make a single function by fusing with call_hatpro?
 
 #include<vector>
 #include "IOmex_hatpro.h"

@@ -48,18 +48,18 @@ mxArray *DataFile2MexStruct(const char *FileName){
   IsPRO = PRO.Read_BinFile(FileName);
   IsBRT = BRT.Read_BinFile(FileName);
   
-  // define dimention variables:
-  mwSize tDims = IsPRO?PRO.Ndata:BRT.Ndata;  // time
-  mwSize hDims = IsPRO?PRO.Nalt:0;  // height
-  mwSize aDims = IsBRT?BRT.Nang:0;  // angle
-  mwSize fDims = IsBRT?BRT.Nfreq:0;  // frequency
+  // define dimension variables:
+  uint tDims = IsPRO?PRO.Ndata:BRT.Ndata;  // time
+  uint hDims = IsPRO?PRO.Nalt:0;  // height
+  uint aDims = IsBRT?BRT.Nang:0;  // angle
+  uint fDims = IsBRT?BRT.Nfreq:0;  // frequency
 
-  mwSize NELEN[4] = {tDims, fDims, aDims, hDims};
-  
+  uint NELEN[4] = {tDims, fDims, aDims, hDims};
+
   // Converting RPG time format to year,month,day,hour,min,secs:
   float **date;
   date = new float*[tDims];
-  for(int i=0; i<tDims; ++i) date[i] = new float[6];
+  for(uint i=0; i<tDims; ++i) date[i] = new float[6];
 
   hatpro::TimeSec2Date(tDims, IsBRT?BRT.TimeSec:PRO.TimeSec, tDims, date);
 
@@ -71,16 +71,16 @@ mxArray *DataFile2MexStruct(const char *FileName){
 
   for(size_t i=0;i<SU.NFields;++i){
     mxClassID  myID = mxDOUBLE_CLASS;
-    mwSize xDim=0, yDim=1, zDim=1;   // temporal dimensions
+    uint xDim=1, yDim=1, zDim=1;   // temporal dimensions
     mxArray *TMP = NULL;  
-    float *pointt=NULL;
-    float **point2D=NULL;
+    float *pointt = NULL;
+    float **point2D = NULL;
 
     // Data Dimesions:
     if(!strcmp(SU.FieldsName[i], "NUM_ELEMENTS")){
       xDim = 1;
       yDim = 4;
-      myID = mxINT32_CLASS;
+      myID = mxUINT32_CLASS;
       pointt = (float *) NELEN;
     }
 
@@ -102,13 +102,14 @@ mxArray *DataFile2MexStruct(const char *FileName){
       xDim = hDims;
       // converting from int to float;
       pointt = new float[hDims];
-      for(int h=0; h<hDims; ++h) pointt[h] = static_cast<decltype(myID)>(PRO.Alts[h]);
+      for(uint h=0; h<hDims; ++h)
+	pointt[h] = static_cast<decltype(myID)>(PRO.Alts[h]);
       cout<<SU.FieldsName[i]<<" H "<<hDims<<endl;
     }
 
     if(!strcmp(SU.FieldsName[i],"FRE")){
       myID = mxSINGLE_CLASS;
-      xDim = fDims;
+      yDim = fDims;
       pointt = (float *) BRT.Freq;
     }
 
@@ -129,13 +130,13 @@ mxArray *DataFile2MexStruct(const char *FileName){
     if(!strcmp(SU.FieldsName[i],"ELV")){
       cout<<SU.FieldsName[i]<<" Elevation"<<endl;
       myID = mxSINGLE_CLASS;
-      xDim = code==BLBcode? aDims: tDims;
+      yDim = code==BLBcode? aDims: tDims;
       pointt = IsBRT?BRT.ELV: PRO.ELV;
     }
     if(!strcmp(SU.FieldsName[i],"AZI")){
       cout<<SU.FieldsName[i]<<" Azimuth"<<endl;
       myID = mxSINGLE_CLASS;
-      xDim = code==BLBcode? aDims: tDims;
+      yDim = code==BLBcode? aDims: tDims;
       pointt = IsBRT?BRT.AZI: PRO.AZI;
     }
     
@@ -181,17 +182,19 @@ mxArray *DataFile2MexStruct(const char *FileName){
 
     // Defining Mex variable to allocate the data:
     //TMP = mxCreateNumericMatrix(xDim, yDim, myID, mxREAL);
-    const mwSize xyDims[3] = {xDim, yDim, zDim};
-    TMP = mxCreateNumericArray(3, xyDims, myID, mxREAL);
+    const mwSize xyDims[3] = {(mwSize) xDim, (mwSize) yDim, (mwSize) zDim};
+    TMP = mxCreateNumericArray((mwSize) 3, xyDims, myID, mxREAL);
     
-    if(pointt!=NULL && point2D==NULL)               // for 1D variables only:
-      memcpy(mxGetPr(TMP),  pointt, xDim*yDim*sizeof(myID));
+    // for 1D variables only:
+    if(pointt!=NULL && point2D==NULL)
+      memcpy(mxGetPr(TMP), pointt, xDim*yDim*sizeof(myID));
     
-    else if(pointt==NULL && point2D!=NULL){          // for 2D variables:
+    // for 2D variables:
+    else if(pointt==NULL && point2D!=NULL){
       //cout<<"2D variable "<<xDim<<"x"<<yDim<<endl;
-      for(int t=0; t<xDim; ++t){
-	for(int h=0; h<yDim; ++h)
-	  for(int z=0; z<zDim; ++z)
+      for(uint t=0; t<xDim; ++t){
+	for(uint h=0; h<yDim; ++h)
+	  for(uint z=0; z<zDim; ++z)
 	    *(mxGetPr(TMP) + t + h*xDim + z*xDim*yDim) = static_cast<double>(point2D[t][h*zDim+z]);
       }
     }
@@ -199,9 +202,9 @@ mxArray *DataFile2MexStruct(const char *FileName){
       // Special case for the Meteorological variables which are stored
       // at the BRT class within the TB array:
       cout<<"met variable: "<<SU.FieldsName[i]<<endl;
-      TMP  = mxCreateNumericMatrix(tDims,(mwSize) 1,mxDOUBLE_CLASS, mxREAL);
+      TMP  = mxCreateNumericMatrix((mwSize) tDims,(mwSize) 1, mxDOUBLE_CLASS, mxREAL);
 
-      for(int t=0; t<tDims; ++t)
+      for(uint t=0; t<tDims; ++t)
 	*(mxGetPr(TMP) + t) = static_cast<double>(BRT.TB[t][metaux]);
 
       cout<<"before struct assigment"<<metaux<<endl;
