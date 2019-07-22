@@ -17,10 +17,57 @@
 // * implement for Profiles Create_BINfile subroutine in hatpro.cpp
 
 #include<vector>
+#include<typeinfo>
 #include "IOmex_hatpro.h"
 
 using namespace std;
 
+template<typename T>
+T* AssignMxPointer(mxArray *TMP){
+  mxClassID theClass = mxGetClassID(TMP);
+  //double *pr = NULL;
+  float *pf = NULL;
+  bool IsFloatType = false;
+  switch(theClass){
+  case mxSINGLE_CLASS:
+    IsFloatType = !strcmp(typeid(T).name(),"single");
+  case mxDOUBLE_CLASS:
+    IsFloatType = !strcmp(typeid(T).name(),"double");
+  case mxINT32_CLASS:
+    IsFloatType = !strcmp(typeid(T).name(),"int");
+  }
+  cout<<"Type ID is: "<<IsFloatType<<" "<<mxGetClassName(TMP)<<" "<<typeid(T).name()<<endl;
+  //if(typeid(theClass)!=typeid(T))
+  //  mexErrMsgTxt("Not the required class type!");
+  
+  pf = (T *) mxGetData(TMP);
+  //  {
+  //  pr = (double *) mxGetData(TMP);
+  //  IsFloatType = false;}
+  //if(theClass==mxSINGLE_CLASS) pf = (float *) mxGetData(TMP);
+  
+  //void *pv;
+  //pv = IsFloatType?(void *) pf:(void *) pr;
+  //else mexErrMsgTxt("only support double and single!");
+  return(pf);
+}
+
+bool CheckMxArrayDimension(mxArray *TMP, int *dims){
+  bool goodness = true;
+  mwSize mxNDims = mxGetNumberOfDimensions(TMP);
+  const mwSize *mxDims = mxGetDimensions(TMP);
+  for(mwIndex i=0; i<mxNDims; ++i){
+    bool tempbool = false;
+    for(int j=0; j<4; ++j)
+      if(mxDims[i]==dims[j]){
+	tempbool = true;
+	break;
+      }
+    goodness &= tempbool;
+  }
+  if(!goodness) cout<<"Error! not the same dimension"<<endl;
+  return(goodness);
+}
 
 // Main MEX Function starts here:
 void mexFunction(int nlhs, mxArray *plhs[],
@@ -62,8 +109,11 @@ void mexFunction(int nlhs, mxArray *plhs[],
   
   // Retrieving the dimensions for the variables:
   TMP = mxGetField(prhs[0],(mwIndex) 0, "NUM_ELEMENTS");
-  int *dims = (int*) mxGetData(TMP);
-  
+  //int *dims = (int*) mxGetData(TMP);
+  int *dims;
+  dims = new int[4];
+  dims = (int *) mxGetData(TMP);
+
   ND = (int) dims[0];
   NF = (int) dims[1];
   NA = (int) dims[2];
@@ -81,13 +131,16 @@ void mexFunction(int nlhs, mxArray *plhs[],
   for(uint i=1; i<KAKES.NFields; ++i){
 
     TMP = mxGetField(prhs[0],(mwIndex) 0, KAKES.FieldsName[i]);
-  
+    mwSize sizebuf = mxGetElementSize(TMP);
+
     if(!strcmp(KAKES.FieldsName[i],"TIME")){
+      //CheckMxArrayDimension(TMP, dims);
+      float *pr = (float *) mxGetData(TMP);
       myTIME = new float*[ND];
       for(int x=0; x<ND; ++x){
 	myTIME[x] = new float[6];
 	for(int y=0; y<6; ++y)
-	  myTIME[x][y] = (float)  *(mxGetPr(TMP) + x + y*ND);
+	  myTIME[x][y] = pr[x + y*ND]; // *(mxGetPr(TMP) + x + y*ND);
       }
     }
 
@@ -95,7 +148,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
       BRT.TimeRef = (int) mxGetScalar(TMP);
 
     if(!strcmp(KAKES.FieldsName[i],"FRE"))
-      BRT.Freq = (float *) mxGetData(TMP);
+      memcpy(BRT.Freq, mxGetData(TMP), sizebuf);
+      //BRT.Freq = (float *) mxGetData(TMP);
     
     if(!strcmp(KAKES.FieldsName[i],"ELV"))
       BRT.ELV = (float *) mxGetData(TMP);
@@ -107,13 +161,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
       BRT.RF = (int *) mxGetData(TMP);
 
     if(!strcmp(KAKES.FieldsName[i],"TB")){
-      mwSize tempNN = mxGetNumberOfDimensions(TMP);
-      const mwSize *tempdim = mxGetDimensions(TMP);
-      for(mwSize kk=0; kk<tempNN; ++kk) cout<<"TB dim is "<<tempdim[kk]<<endl;
+      //CheckMxArrayDimension(TMP, dims);
+      float *pr = (float *) mxGetData(TMP);
       for(int x=0; x<ND; ++x)
 	for(int y=0; y<NF; ++y)
 	  for(int z=0; z<NA+1; ++z)
-	    BRT.TB[x][y*(NA+1)+z] = (float) *(mxGetPr(TMP) + x + y*ND + z*ND*NF);
+	    BRT.TB[x][y*(NA+1)+z] =  pr[x + y*ND + z*ND*NF]; //((float *) mxGetData(TMP)) + x + y*ND + z*ND*NF);
 
     } // end of TB if
 
@@ -124,8 +177,15 @@ void mexFunction(int nlhs, mxArray *plhs[],
        !strcmp(KAKES.FieldsName[i],"WS") ||
        !strcmp(KAKES.FieldsName[i],"WD") ||
        !strcmp(KAKES.FieldsName[i],"RR") ){
+      
+      //double *pr = NULL;
+      //bool FloatType = true;
+      //if(mxGetClassID(TMP)==mxSINGLE_CLASS) pf = (float *) mxGetData(TMP); //mexErrMsgTxt("variable needs to be single!");
+      //if(mxGetClassID(TMP)==mxDOUBLE_CLASS){ pr = (double *) mxGetData(TMP); FloatType = false;}
+      //float *pr = (float *) mxGetData(TMP);
+      float *pf = AssignMxPointer<float>(TMP);
       for(int x=0; x<ND; ++x)
-	BRT.TB[x][metaux] = (float) *(mxGetPr(TMP) + x);
+	BRT.TB[x][metaux] = pf[x]; //(FloatType?pf[x]:pr[x]);
       metaux++;
     }  // end of IF MET variables
 
@@ -138,16 +198,18 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     if(!strcmp(KAKES.FieldsName[i],"QV") |
        !strcmp(KAKES.FieldsName[i],"T" )){
+      float *pr = (float *) mxGetData(TMP);
       for(int x=0; x<ND; ++x)
 	for(int y=0; y<NH; ++y)
-	  PRO.PRO[x][y] = (float) *(mxGetPr(TMP) + x + y*ND);
+	  PRO.PRO[x][y] = pr[x + y*ND];
       // Finding out the min and max values
       hatpro::minmax_value(PRO.PRO, ND, 1, NH, &PRO.PROMin, &PRO.PROMax);
     }
     if(!strcmp(KAKES.FieldsName[i],"RH")){
+      float *pr = (float *) mxGetData(TMP);
       for(int x=0; x<ND; ++x)
 	for(int y=0; y<NH; ++y)
-	  PRO.PRO2[x][y] = (float) *(mxGetPr(TMP) + x + y*ND);
+	  PRO.PRO2[x][y] = pr[x + y*ND];
     }
 
    
@@ -192,7 +254,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
   //BRT.Print_Data();
   BRT.Create_BinFile(filen);
-  
+
   mxFree(filen);
   return;
 }
