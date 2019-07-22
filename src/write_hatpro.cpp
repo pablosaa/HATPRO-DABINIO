@@ -23,25 +23,39 @@
 using namespace std;
 
 template<typename T>
-T* AssignMxPointer(mxArray *TMP){
+T* AssignMxPointer(mxArray *TMP, const char *varname){
+
+  char ErrMessage[100];
   mxClassID theClass = mxGetClassID(TMP);
-  //double *pr = NULL;
-  float *pf = NULL;
-  bool IsFloatType = false;
+  T *pf = NULL;
+  bool IsRightType = false;
   switch(theClass){
   case mxSINGLE_CLASS:
-    IsFloatType = !strcmp(typeid(T).name(),"single");
+    IsRightType = typeid(T)==typeid(float);
+    break;
   case mxDOUBLE_CLASS:
-    IsFloatType = !strcmp(typeid(T).name(),"double");
+    IsRightType = typeid(T)==typeid(double);
+    break;
   case mxINT32_CLASS:
-    IsFloatType = !strcmp(typeid(T).name(),"int");
+    IsRightType = typeid(T)==typeid(int);
+    break;
+  case mxUINT32_CLASS:
+    IsRightType = typeid(T)==typeid(uint);
   }
-  cout<<"Type ID is: "<<IsFloatType<<" "<<mxGetClassName(TMP)<<" "<<typeid(T).name()<<endl;
-  //if(typeid(theClass)!=typeid(T))
-  //  mexErrMsgTxt("Not the required class type!");
+
+  
+  cout<<"Type ID is: "<<IsRightType<<" "<<mxGetClassName(TMP)<<" "<<typeid(T).name()<<endl;
+  if(!IsRightType){
+    sprintf(ErrMessage,"Wrong class type for variable: %s! passed as (%s) but to be assigned as (%s)",
+	    varname,mxGetClassName(TMP),typeid(T).name());  
+    mexErrMsgTxt(ErrMessage);
+  }
   
   pf = (T *) mxGetData(TMP);
-  //  {
+
+  // Casting in the loop to the <T> type:
+  // pout[i+ j*Nx + k*Nx*Ny] = static_cast<T>(pf[i]);
+  // 
   //  pr = (double *) mxGetData(TMP);
   //  IsFloatType = false;}
   //if(theClass==mxSINGLE_CLASS) pf = (float *) mxGetData(TMP);
@@ -134,13 +148,13 @@ void mexFunction(int nlhs, mxArray *plhs[],
     mwSize sizebuf = mxGetElementSize(TMP);
 
     if(!strcmp(KAKES.FieldsName[i],"TIME")){
-      //CheckMxArrayDimension(TMP, dims);
-      float *pr = (float *) mxGetData(TMP);
+      //      float *pr = (float *) mxGetData(TMP);
+      double *pr = AssignMxPointer<double>(TMP, KAKES.FieldsName[i]);
       myTIME = new float*[ND];
       for(int x=0; x<ND; ++x){
 	myTIME[x] = new float[6];
 	for(int y=0; y<6; ++y)
-	  myTIME[x][y] = pr[x + y*ND]; // *(mxGetPr(TMP) + x + y*ND);
+	  myTIME[x][y] = (float) pr[x + y*ND]; // *(mxGetPr(TMP) + x + y*ND);
       }
     }
 
@@ -148,8 +162,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
       BRT.TimeRef = (int) mxGetScalar(TMP);
 
     if(!strcmp(KAKES.FieldsName[i],"FRE"))
-      memcpy(BRT.Freq, mxGetData(TMP), sizebuf);
-      //BRT.Freq = (float *) mxGetData(TMP);
+      //memcpy(BRT.Freq, mxGetData(TMP), sizebuf);
+      BRT.Freq = (float *) mxGetData(TMP);
     
     if(!strcmp(KAKES.FieldsName[i],"ELV"))
       BRT.ELV = (float *) mxGetData(TMP);
@@ -178,14 +192,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
        !strcmp(KAKES.FieldsName[i],"WD") ||
        !strcmp(KAKES.FieldsName[i],"RR") ){
       
-      //double *pr = NULL;
-      //bool FloatType = true;
-      //if(mxGetClassID(TMP)==mxSINGLE_CLASS) pf = (float *) mxGetData(TMP); //mexErrMsgTxt("variable needs to be single!");
-      //if(mxGetClassID(TMP)==mxDOUBLE_CLASS){ pr = (double *) mxGetData(TMP); FloatType = false;}
-      //float *pr = (float *) mxGetData(TMP);
-      float *pf = AssignMxPointer<float>(TMP);
+      double *pf = AssignMxPointer<double>(TMP, KAKES.FieldsName[i]);
       for(int x=0; x<ND; ++x)
-	BRT.TB[x][metaux] = pf[x]; //(FloatType?pf[x]:pr[x]);
+	BRT.TB[x][metaux] = (float) pf[x]; //(FloatType?pf[x]:pr[x]);
       metaux++;
     }  // end of IF MET variables
 
