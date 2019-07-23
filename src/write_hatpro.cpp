@@ -23,24 +23,22 @@
 
 using namespace std;
 
+// ---
 struct MxTypes {
-  double operator()(float**){
-    return((double) 1.0);};
-  float operator()(float*){
-    return((float) 2.0);};
-  //  float  operator()(mxArray*, float*){return 2.0;};
-  int    operator()(int*){return 3.0;};
+  double operator()(float**){return((double) 1.0); };
+  float operator()(float*){return((float) 2.0); };
+  int operator()(int*){return((int) 3); };
+  uint operator()(uint *){return((uint) 2); };
 };
 
+// ---
 template<typename T>
-T* AssignMxPointer(mxArray *TMP, const char *varname){
-
+T *AssignMexPointer(mxArray *TMP, const char *varname){
   char ErrMessage[100];
   mxClassID theClass = mxGetClassID(TMP);
   T *pf = NULL;
-  decltype(theClass) kakes;
-  cout<<"The types are: "<<typeid(T).name()<<" "<<mxGetClassName(TMP)<<" "<<typeid(kakes).name()<<endl;
   bool IsRightType = false;
+  
   switch(theClass){
   case mxSINGLE_CLASS:
     IsRightType = typeid(T)==typeid(float);
@@ -54,29 +52,19 @@ T* AssignMxPointer(mxArray *TMP, const char *varname){
   case mxUINT32_CLASS:
     IsRightType = typeid(T)==typeid(uint);
   }
-
   
-  cout<<"Type ID is: "<<IsRightType<<" "<<mxGetClassName(TMP)<<" "<<typeid(T).name()<<endl;
+  //cout<<"Type ID are: "<<IsRightType<<" "<<mxGetClassName(TMP)<<" "<<typeid(T).name()<<endl;
   if(!IsRightType){
-    sprintf(ErrMessage,"Wrong class type for variable: %s! passed as (%s) but to be assigned as (%s)",
+    sprintf(ErrMessage,"Wrong class type for variable: %s! passed as (%s) but should be (%s)",
 	    varname,mxGetClassName(TMP),typeid(T).name());  
     mexErrMsgTxt(ErrMessage);
   }
   
-  pf = (T *) mxGetData(TMP);
-
-  // Casting in the loop to the <T> type:
-  // pout[i+ j*Nx + k*Nx*Ny] = static_cast<T>(pf[i]);
-  // 
-  //  pr = (double *) mxGetData(TMP);
-  //  IsFloatType = false;}
-  //if(theClass==mxSINGLE_CLASS) pf = (float *) mxGetData(TMP);
+  pf = static_cast<T *>(mxGetData(TMP));
   
-  //void *pv;
-  //pv = IsFloatType?(void *) pf:(void *) pr;
-  //else mexErrMsgTxt("only support double and single!");
   return(pf);
 }
+// ---
 
 bool CheckMxArrayDimension(mxArray *TMP, int *dims){
   bool goodness = true;
@@ -94,7 +82,9 @@ bool CheckMxArrayDimension(mxArray *TMP, int *dims){
   if(!goodness) cout<<"Error! not the same dimension"<<endl;
   return(goodness);
 }
+// ---
 
+// *************************************************************
 // Main MEX Function starts here:
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[]){
@@ -161,12 +151,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     if(!strcmp(KAKES.FieldsName[i],"TIME")){
       //      float *pr = (float *) mxGetData(TMP);
-      double *pr = AssignMxPointer<double>(TMP, KAKES.FieldsName[i]);
+      auto *pr = AssignMexPointer<double>(TMP, "TIME");
       myTIME = new float*[ND];
       for(int x=0; x<ND; ++x){
 	myTIME[x] = new float[6];
 	for(int y=0; y<6; ++y)
-	  myTIME[x][y] = (float) pr[x + y*ND]; // *(mxGetPr(TMP) + x + y*ND);
+	  myTIME[x][y] = (float) pr[x + y*ND];
       }
     }
 
@@ -187,12 +177,13 @@ void mexFunction(int nlhs, mxArray *plhs[],
       BRT.RF = (int *) mxGetData(TMP);
 
     if(!strcmp(KAKES.FieldsName[i],"TB")){
-      //CheckMxArrayDimension(TMP, dims);
-      float *pr = (float *) mxGetData(TMP);
+      auto *pr = AssignMexPointer<result_of<MxTypes(decltype(BRT.TB))>::type>(TMP, "TB");
+      //float *pr = (float *) mxGetData(TMP);
       for(int x=0; x<ND; ++x)
 	for(int y=0; y<NF; ++y)
 	  for(int z=0; z<NA+1; ++z)
-	    BRT.TB[x][y*(NA+1)+z] =  pr[x + y*ND + z*ND*NF]; //((float *) mxGetData(TMP)) + x + y*ND + z*ND*NF);
+	    BRT.TB[x][y*(NA+1)+z] = static_cast<float>( pr[x + y*ND + z*ND*NF]);
+      //((float *) mxGetData(TMP)) + x + y*ND + z*ND*NF);
 
     } // end of TB if
 
@@ -204,12 +195,13 @@ void mexFunction(int nlhs, mxArray *plhs[],
        !strcmp(KAKES.FieldsName[i],"WD") ||
        !strcmp(KAKES.FieldsName[i],"RR") ){
       
+      //result_of<MxTypes(decltype(BRT.TB))>::type *pf;
       
-      result_of<MxTypes(decltype(BRT.TB))>::type *pf;
-      pf = AssignMxPointer<double>(TMP, KAKES.FieldsName[i]);
-      //pf = static_cast<decltype(pf)>(mxGetData(TMP));
+      auto *pf = AssignMexPointer<result_of<MxTypes(decltype(BRT.TB))>::type>(TMP, KAKES.FieldsName[i]);
+      //pf = AssignMxPointer<remove_pointer<decltype(pf)>::type>(TMP, KAKES.FieldsName[i]);
+
       for(int x=0; x<ND; ++x)
-	BRT.TB[x][metaux] = (float) pf[x]; //(FloatType?pf[x]:pr[x]);
+	BRT.TB[x][metaux] = (float) pf[x];
       metaux++;
     }  // end of IF MET variables
 
