@@ -2,8 +2,8 @@
 // Code to create binari data files for HATPRO system
 //
 // USAGE:
-//    > write_hatpro(BRT,'/data/myhatpro/file_basename');
-//    > status = write_hatpro(BRT,'/data/myhatpro/file_basename');
+//    > write_hatpro(BRT,'/data/myhatpro/file_basename.BRT');
+//    > status = write_hatpro(BRT,'/data/myhatpro/file_basename.BRT');
 //
 // (c) 2018, Pablo Saavedra G. (pablo.saa@uib.no)
 // Geophysical Institute, University of Bergen
@@ -18,9 +18,19 @@
 
 #include<vector>
 #include<typeinfo>
+#include<type_traits>
 #include "IOmex_hatpro.h"
 
 using namespace std;
+
+struct MxTypes {
+  double operator()(float**){
+    return((double) 1.0);};
+  float operator()(float*){
+    return((float) 2.0);};
+  //  float  operator()(mxArray*, float*){return 2.0;};
+  int    operator()(int*){return 3.0;};
+};
 
 template<typename T>
 T* AssignMxPointer(mxArray *TMP, const char *varname){
@@ -28,6 +38,8 @@ T* AssignMxPointer(mxArray *TMP, const char *varname){
   char ErrMessage[100];
   mxClassID theClass = mxGetClassID(TMP);
   T *pf = NULL;
+  decltype(theClass) kakes;
+  cout<<"The types are: "<<typeid(T).name()<<" "<<mxGetClassName(TMP)<<" "<<typeid(kakes).name()<<endl;
   bool IsRightType = false;
   switch(theClass){
   case mxSINGLE_CLASS:
@@ -192,7 +204,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
        !strcmp(KAKES.FieldsName[i],"WD") ||
        !strcmp(KAKES.FieldsName[i],"RR") ){
       
-      double *pf = AssignMxPointer<double>(TMP, KAKES.FieldsName[i]);
+      
+      result_of<MxTypes(decltype(BRT.TB))>::type *pf;
+      pf = AssignMxPointer<double>(TMP, KAKES.FieldsName[i]);
+      //pf = static_cast<decltype(pf)>(mxGetData(TMP));
       for(int x=0; x<ND; ++x)
 	BRT.TB[x][metaux] = (float) pf[x]; //(FloatType?pf[x]:pr[x]);
       metaux++;
