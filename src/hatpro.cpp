@@ -152,7 +152,7 @@ bool hatpro::MET_var::Read_BinFile(const char * filename){
 
 // ---------------------------------------------------------
 // Function to read Profiler variables binary data files,
-// Type supported: (TPC,TPB,HPC,LPR,IWV,LWP,MET?)
+// Type supported: (TPC,TPB,HPC,LPR,IWV,LWP)
 bool hatpro::PRO_var::Read_BinFile(const char *filename){
   ifstream fin;
 
@@ -310,6 +310,77 @@ void hatpro::BRT_var::Create_BinFile(const char *foutname){
 // -------------------------------------
 
 // *****************************************************
+// Subroutine to create PROfile binary file
+bool hatpro::PRO_var::Create_BinFile(const char *foutname){
+  ofstream fwr;
+  // determining proper file name to save:
+  string fname(foutname);
+  size_t idx = fname.find('.');
+  if(idx==string::npos){
+    cout<<"Are you sure this is a valid file name?"<<endl;
+    return false;
+  }
+  
+  if(code==HPCcode || code==HPCcode+11)
+    fname.replace(idx+1, 3, "HPC");
+  if(code==TPCcode)
+    fname.replace(idx+1, 3, "TPC");
+  if(code==TPBcode)
+    fname.replace(idx+1, 3, "TPB");
+
+  cout<<"File to storage: "<<fname.c_str()<<endl;
+  fwr.open(fname.c_str(), ios::out|ios::binary);
+  if(fwr.fail()){
+    return false;
+  }
+  fwr.write((char *) &code, sizeof(int));
+  fwr.write((char *) &Ndata, sizeof(int));
+  fwr.write((char *) &PROMin, sizeof(float));
+  fwr.write((char *) &PROMax, sizeof(float));
+  fwr.write((char *) &TimeRef, sizeof(int));
+  fwr.write((char *) &Retrieval, sizeof(int));
+
+  if(code==LWPcode || code==IWVcode || 
+     code==BLHcode || code==CBHcode) Nalt = 1;
+  else if(code==STAcode) Nalt = 6;
+  else fwr.write((char *) &Nalt, sizeof(int));
+
+  if(code==TPCcode || code==TPBcode || 
+     code==HPCcode || code==HPCcode+1 || code==STAcode)
+    fwr.write((char *) Alts, Nalt*sizeof(int));
+
+  for(int i=0; i<Ndata; ++i){
+    fwr.write((char *) &TimeSec[i], sizeof(int));
+    char RFtmp = static_cast<char>(RF[i]);
+    
+    fwr.write((char *) &RF[i], sizeof(char));
+    
+    fwr.write((char *) PRO[i], Nalt*sizeof(float));
+
+    if(code==LWPcode || code==IWVcode){
+      float *ANG;
+      hatpro::ElAzi2Angular(&ELV[i], &AZI[i], 1, ANG);
+      fwr.write((char *) ANG, sizeof(float));
+    }
+  }
+
+  if(code==HPCcode+1){
+    float TMPminmax[2];
+    int TMPtime;
+    char TMPrf;
+    fwr.write((char *) TMPminmax, 2*sizeof(float));
+    for(int i=0; i<Ndata; ++i){
+      fwr.write((char *) &TimeSec[i], sizeof(int));
+      fwr.write((char *) &RF[i], sizeof(int));
+      fwr.write((char *) PRO2[i], Nalt*sizeof(float));
+    }
+  }
+  fwr.close();
+  return true;
+}
+// ---------------------------------------
+
+// *****************************************************
 // Subroutine to create synthetic MET binary file
 void hatpro::MET_var::Create_BinFile(const char *foutname){
   ofstream fwr;
@@ -388,7 +459,9 @@ void hatpro::BRT_var::Print_Data(){
 void hatpro::PRO_var::Print_Data(){
   if(hatpro::WhatAmI(code)) return;
   float **date;
-  
+  date = new float*[Ndata];
+  for(int i=0; i<Ndata; ++i) date[i] = new float[6];
+
   TimeSec2Date(Ndata, TimeSec, Ndata, date);
   cout<<"% Printing data with "<<Nalt<<" altitudes and "<<Ndata<<" data points"<<endl;
   cout<<setprecision(2)<<setfill(' ')<<fixed;
@@ -406,6 +479,7 @@ void hatpro::PRO_var::Print_Data(){
     cout<<endl;
   }
 
+  delete [] date;
   return;
 }  // ... End of Printing Profile data.
 // -----

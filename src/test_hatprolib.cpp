@@ -68,9 +68,11 @@ int main(int argc, char *argv[]){
   case HPCcode:
   case IWVcode:
   case LWPcode:
-    output = Func<hatpro::PRO_var>(fileBRT, data);
-    cout<<data.Ndata;
-    break;
+    {
+      output = Func<hatpro::PRO_var>(fileBRT, data);
+      cout<<data.Ndata<<endl;
+      break;
+    }
     //case METcode:
     //output = Func<hatpro::MET_var>(fileBRT, met);
     //break;

@@ -154,6 +154,7 @@ namespace hatpro {
     }
     void Print_Data();
     bool Read_BinFile(const char *filename);
+    bool Create_BinFile(const char *foutname);
 
   protected:
     std::set<int> myChildren = {TPCcode,TPBcode,HPCcode,HPCcode+1,LWPcode,IWVcode,BLHcode,STAcode,CBHcode};
