@@ -123,4 +123,33 @@ int GetInputFile_MWR(vector<string> &InFiles){
 // ================ End of HATPRO Input File Dialog-Box ========================
 
 
+// ********* Routine to Show HELP MESSAGE *****************************
+void ShowHelp(unsigned int key){
+  switch(key){
+  case 1:
+    cout<<"USAGE:"<<endl<<
+      "Option 1: To open file browser to select a binary HATPRO file,"<<endl<<
+      "> BRT = read_hatpro;"<<endl<<endl<<
+      "Option 2: To read a specific given file name as string variable,"<<endl<<
+      "> BRT = read_hatpro('/hatpro/data/Y2018/M09/D20/180920.BRT');"<<endl<<endl<<
+      
+      "Option 3: To read a set of associated binary files e.g BRT, HPC, TPC, MET"<<endl<<
+      "> DAT = read_hatpro('/hatpro/data/Y2018/M09/D20/180920.BRT',{'HPC','TPC','MET'});"<<endl<<
+      "WHERE:"<<endl<<
+      "* BRT is a Matlab structure"<<endl<<
+      "* DAT is a cell array, with every cell element corresponds to a structure"<<endl<<
+      "for the corresponding data file."<<endl<<endl;
+
+    break;
+  case 2:
+    cout<<"USAGE:"<<endl<<
+      "   > write_hatpro(BRT,'/data/myhatpro/file_basename.BRT');"<<endl<<
+      "   > status = write_hatpro(BRT,'/data/myhatpro/file_basename.BRT');"<<endl<<endl;
+    break;
+  }
+  hatpro::ShowLicense();
+  return;
+}
+// ========= End of Routine Show HELP MESSAGE =========================
+
 // END OF HEADER FILE

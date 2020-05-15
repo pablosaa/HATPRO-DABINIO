@@ -56,7 +56,7 @@ T *AssignMexPointer(mxArray *TMP, const char *varname){
   //cout<<"Type ID are: "<<IsRightType<<" "<<mxGetClassName(TMP)<<" "<<typeid(T).name()<<endl;
   if(!IsRightType){
     sprintf(ErrMessage,"Wrong class type for variable: %s! passed as (%s) but should be (%s)",
-	    varname,mxGetClassName(TMP),typeid(T).name());  
+	    varname, mxGetClassName(TMP), typeid(T).name());  
     mexErrMsgTxt(ErrMessage);
   }
   
@@ -89,10 +89,14 @@ bool CheckMxArrayDimension(mxArray *TMP, int *dims){
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[]){
 
-  // Ckecking for input and output arguments
-  if(nrhs!=2)
+  // Checking for output argument:
+  
+  // Checking for input arguments:
+  if(nrhs!=2){
+    ShowHelp(2);
     mexErrMsgTxt("Two input arguments are needed! (See help)");
-
+  }
+  
   if(!mxIsStruct(prhs[0]))
     mexErrMsgTxt("First argument needs to be a structure!");
 
@@ -124,7 +128,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
   mxArray *TMP;
   
   // Retrieving the dimensions for the variables:
-  TMP = mxGetField(prhs[0],(mwIndex) 0, "NUM_ELEMENTS");
+  TMP = mxGetField(prhs[0], (mwIndex) 0, "NUM_ELEMENTS");
   //int *dims = (int*) mxGetData(TMP);
   int *dims;
   dims = new int[4];
@@ -149,7 +153,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     TMP = mxGetField(prhs[0],(mwIndex) 0, KAKES.FieldsName[i]);
     mwSize sizebuf = mxGetElementSize(TMP);
 
-    if(!strcmp(KAKES.FieldsName[i],"TIME")){
+    if(!strcmp(KAKES.FieldsName[i], "TIME")){
       //      float *pr = (float *) mxGetData(TMP);
       auto *pr = AssignMexPointer<double>(TMP, "TIME");
       myTIME = new float*[ND];
@@ -183,7 +187,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
 	for(int y=0; y<NF; ++y)
 	  for(int z=0; z<NA+1; ++z)
 	    BRT.TB[x][y*(NA+1)+z] = static_cast<float>( pr[x + y*ND + z*ND*NF]);
-      //((float *) mxGetData(TMP)) + x + y*ND + z*ND*NF);
 
     } // end of TB if
 

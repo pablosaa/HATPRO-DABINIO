@@ -240,11 +240,15 @@ void mexFunction(int nlhs, mxArray *plhs[],
   unsigned int NTotalFiles = 0;
   // Checking consistency of the input and output arguments:
   if(nlhs==0){
-    mexErrMsgTxt("One output parameter needed! (See help)");
+    ShowHelp(1);
+    mexErrMsgTxt("One output parameter needed! (See above help)");
   }
-  if(nrhs>2)
+  if(nrhs>2){
+    ShowHelp(1);
     mexErrMsgTxt("Max Two input arguments needed! (See help)");
+  }
   if(nrhs==2 && (!mxIsChar(prhs[0]) || !mxIsCell(prhs[1]))){
+    ShowHelp(1);
     mexErrMsgTxt("ERROR: input argument should be Char and cell e.g. 'input_file.BRT',{'TPB','MET','BLB'}");
   }
 
