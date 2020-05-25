@@ -217,18 +217,20 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
     if(!strcmp(KAKES.FieldsName[i],"QV") |
        !strcmp(KAKES.FieldsName[i],"T" )){
-      float *pr = (float *) mxGetData(TMP);
+      auto *pr = AssignMexPointer<result_of<MxTypes(decltype(PRO.PRO))>::type>(TMP, KAKES.FieldsName[i]);
+      //float *pr = (float *) mxGetData(TMP);
       for(int x=0; x<ND; ++x)
 	for(int y=0; y<NH; ++y)
-	  PRO.PRO[x][y] = pr[x + y*ND];
+	  PRO.PRO[x][y] = static_cast<float>(pr[x + y*ND]);
       // Finding out the min and max values
       hatpro::minmax_value(PRO.PRO, ND, 1, NH, &PRO.PROMin, &PRO.PROMax);
     }
     if(!strcmp(KAKES.FieldsName[i],"RH")){
-      float *pr = (float *) mxGetData(TMP);
+      auto *pr = AssignMexPointer<result_of<MxTypes(decltype(PRO.PRO2))>::type>(TMP, KAKES.FieldsName[i]);
+      //float *pr = (float *) mxGetData(TMP);
       for(int x=0; x<ND; ++x)
 	for(int y=0; y<NH; ++y)
-	  PRO.PRO2[x][y] = pr[x + y*ND];
+	  PRO.PRO2[x][y] = static_cast<float>(pr[x + y*ND]);
     }
 
    
