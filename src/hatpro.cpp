@@ -733,6 +733,15 @@ void hatpro::minmax_value(float **DATA, int ND, int NF, int NA, float min[], flo
 // ==========================================================================================
 
 
+void hatpro::ShowLicense(){
+  std::cout<<"HATPRO_DABINIO library."<<std::endl;
+  
+  std::cout<<"(c) 2019 Pablo Saavedra Garfias., Email: pablo.saa@uib.no"<<std::endl;
+  std::cout<<"Geophysical Institute, University of Bergen"<<std::endl;
+
+  std::cout<<"SEE LICENSE.TXT"<<std::endl;
+}
+
 /* Function to select the subset to apply the retrieval algorithm */
 // int Select_SubSet(MWR_hatpro DATA){ //(float *TB, float *PD, float Elevation){
 

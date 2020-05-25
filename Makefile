@@ -28,7 +28,7 @@ MEX_GCC  = $(subst matlab,mex,$(shell readlink -f $(FOO)))
 OCT_GCC  = /usr/bin/mkoctfile
 
 # Flags
-MYFLAG = -std=gnu++11
+MYFLAG = -std=gnu++11 -Wall
 MWFLAG = $(MYFLAG) -static
 
 # Definition of PATHS:
