@@ -348,6 +348,9 @@ bool hatpro::PRO_var::Create_BinFile(const char *foutname){
   if(code==TPCcode || code==TPBcode || 
      code==HPCcode || code==HPCcode+1 || code==STAcode)
     fwr.write((char *) Alts, Nalt*sizeof(int));
+  
+    cout<<"inside the code PRO "<< code << endl;
+  
 
   for(int i=0; i<Ndata; ++i){
     fwr.write((char *) &TimeSec[i], sizeof(int));

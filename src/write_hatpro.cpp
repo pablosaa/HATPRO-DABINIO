@@ -212,9 +212,12 @@ void mexFunction(int nlhs, mxArray *plhs[],
     if(!strcmp(KAKES.FieldsName[i],"RET"))
       PRO.Retrieval = (int) mxGetScalar(TMP);
 
-    if(!strcmp(KAKES.FieldsName[i],"H"))
-      PRO.Alts = (int *) mxGetData(TMP);
-
+    if(!strcmp(KAKES.FieldsName[i],"H")){
+      auto *pf = AssignMexPointer<float>(TMP, KAKES.FieldsName[i]);
+      for(int y=0; y<NH; ++y)
+	PRO.Alts[y] = static_cast<result_of<MxTypes(decltype(PRO.Alts))>::type>(pf[y]);
+    }
+    
     if(!strcmp(KAKES.FieldsName[i],"QV") |
        !strcmp(KAKES.FieldsName[i],"T" )){
       auto *pr = AssignMexPointer<result_of<MxTypes(decltype(PRO.PRO))>::type>(TMP, KAKES.FieldsName[i]);
@@ -238,7 +241,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
 
   // *** Starting assignation of class members:
   // 
-  BRT.code = code;
   
   // Finding out the min and max values (frequenci dependent) values
   if(code==BLBcode || code==BLBcode-1 || code==BRTcode || code==METcode){
@@ -254,27 +256,42 @@ void mexFunction(int nlhs, mxArray *plhs[],
   
   // coping common fields for PRO and BRT:
   if(!BRTflag){
+    PRO.code = code;
     PRO.TimeSec = BRT.TimeSec;
     PRO.RF = BRT.RF;
     PRO.TimeRef = BRT.TimeRef;
+    PRO.Create_BinFile(filen);
+    
+    cout<<"MIN: ";
+    for(int i=0; i<1; ++i) cout<<PRO.PROMin<<" ";
+    cout<<endl;
+    cout<<"MAX: ";
+    for(int i=0; i<1; ++i) cout<<PRO.PROMax<<" ";
+    cout<<endl;
+    cout<<"ALT: ";
+    for(int i=0; i<PRO.Nalt; ++i) cout<<PRO.Alts[i]<<" ";
+    cout<<endl;
+
   }
-
-  if(code==METcode) BRT.Print_Data();
-  for(int i=0; i<NF; ++i) cout<<BRT.Freq[i]<<"- "<<BRT.TimeSec[i]<<" ";
-  cout<<endl;
-  cout<<"MIN: ";
-  for(int i=0; i<NF; ++i) cout<<BRT.BRTMin[i]<<" ";
-  cout<<endl;
-  cout<<"MAX: ";
-  for(int i=0; i<NF; ++i) cout<<BRT.BRTMax[i]<<" ";
-  cout<<endl;
-  cout<<"ANG: ";
+  else{
+    BRT.code = code;
+    BRT.Create_BinFile(filen);
+    
+    if(code==METcode) BRT.Print_Data();
+    for(int i=0; i<NF; ++i) cout<<BRT.Freq[i]<<"- "<<BRT.TimeSec[i]<<" ";
+    cout<<endl;
+    cout<<"MIN: ";
+    for(int i=0; i<NF; ++i) cout<<BRT.BRTMin[i]<<" ";
+    cout<<endl;
+    cout<<"MAX: ";
+    for(int i=0; i<NF; ++i) cout<<BRT.BRTMax[i]<<" ";
+    cout<<endl;
+    cout<<"ANG: ";
   
-  for(int i=0; i<10; ++i) cout<<BRT.Ang[i]<<" ";
-  cout<<endl;
+    for(int i=0; i<10; ++i) cout<<BRT.Ang[i]<<" ";
+    cout<<endl;
 
-  //BRT.Print_Data();
-  BRT.Create_BinFile(filen);
+  }
 
   mxFree(filen);
   return;
