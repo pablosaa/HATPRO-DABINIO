@@ -32,6 +32,7 @@ struct MxTypes {
 };
 
 // ---
+
 template<typename T>
 T *AssignMexPointer(mxArray *TMP, const char *varname){
   char ErrMessage[100];
@@ -44,7 +45,7 @@ T *AssignMexPointer(mxArray *TMP, const char *varname){
     IsRightType = typeid(T)==typeid(float);
     break;
   case mxDOUBLE_CLASS:
-    IsRightType = typeid(T)==typeid(double);
+    IsRightType = typeid(T)==typeid(double) | typeid(T)==typeid(float);
     break;
   case mxINT32_CLASS:
     IsRightType = typeid(T)==typeid(int);
@@ -53,7 +54,6 @@ T *AssignMexPointer(mxArray *TMP, const char *varname){
     IsRightType = typeid(T)==typeid(uint);
   }
   
-  //cout<<"Type ID are: "<<IsRightType<<" "<<mxGetClassName(TMP)<<" "<<typeid(T).name()<<endl;
   if(!IsRightType){
     sprintf(ErrMessage,"Wrong class type for variable: %s! passed as (%s) but should be (%s)",
 	    varname, mxGetClassName(TMP), typeid(T).name());  
@@ -129,10 +129,8 @@ void mexFunction(int nlhs, mxArray *plhs[],
   
   // Retrieving the dimensions for the variables:
   TMP = mxGetField(prhs[0], (mwIndex) 0, "NUM_ELEMENTS");
-  //int *dims = (int*) mxGetData(TMP);
-  int *dims;
-  dims = new int[4];
-  dims = (int *) mxGetData(TMP);
+
+  auto *dims = AssignMexPointer<double>(TMP, "NUM_ELEM");
 
   ND = (int) dims[0];
   NF = (int) dims[1];
@@ -140,10 +138,10 @@ void mexFunction(int nlhs, mxArray *plhs[],
   NH = (int) dims[3];
 
   hatpro::BRT_var BRT(ND, NF, NA);
+  float BRTMin[NF], BRTMax[NF];
+  
   hatpro::PRO_var PRO(ND, NH);
   
-  float BRTMin[NF], BRTMax[NF];
-
   float **myTIME = NULL; // auxiliary array to collect time array
 
   /* Iterating over Fields, starting at 1 because first field
@@ -198,8 +196,6 @@ void mexFunction(int nlhs, mxArray *plhs[],
        !strcmp(KAKES.FieldsName[i],"WD") ||
        !strcmp(KAKES.FieldsName[i],"RR") ){
       
-      //result_of<MxTypes(decltype(BRT.TB))>::type *pf;
-      
       auto *pf = AssignMexPointer<result_of<MxTypes(decltype(BRT.TB))>::type>(TMP, KAKES.FieldsName[i]);
       //pf = AssignMxPointer<remove_pointer<decltype(pf)>::type>(TMP, KAKES.FieldsName[i]);
 
@@ -213,7 +209,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
       PRO.Retrieval = (int) mxGetScalar(TMP);
 
     if(!strcmp(KAKES.FieldsName[i],"H")){
-      auto *pf = AssignMexPointer<float>(TMP, KAKES.FieldsName[i]);
+      auto *pf = AssignMexPointer<double>(TMP, KAKES.FieldsName[i]);
       for(int y=0; y<NH; ++y)
 	PRO.Alts[y] = static_cast<result_of<MxTypes(decltype(PRO.Alts))>::type>(pf[y]);
     }
@@ -228,7 +224,9 @@ void mexFunction(int nlhs, mxArray *plhs[],
       // Finding out the min and max values
       hatpro::minmax_value(PRO.PRO, ND, 1, NH, &PRO.PROMin, &PRO.PROMax);
     }
+
     if(!strcmp(KAKES.FieldsName[i],"RH")){
+      code++;      
       auto *pr = AssignMexPointer<result_of<MxTypes(decltype(PRO.PRO2))>::type>(TMP, KAKES.FieldsName[i]);
       //float *pr = (float *) mxGetData(TMP);
       for(int x=0; x<ND; ++x)
@@ -239,6 +237,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
    
   }  // end loop over number of fields (index i)
 
+  // -----
   // *** Starting assignation of class members:
   // 
   

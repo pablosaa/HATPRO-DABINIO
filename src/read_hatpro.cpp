@@ -123,9 +123,11 @@ mxArray *DataFile2MexStruct(const char *FileName){
     }
     if(!strcmp(SU.FieldsName[i],"RF")){
       cout<<SU.FieldsName[i]<<" RainFlag"<<endl;
-      myID = mxINT32_CLASS;
+      myID = mxSINGLE_CLASS;
       xDim = tDims;
-      pointt = IsBRT?(float *) BRT.RF:(float *) PRO.RF;
+      pointt = new float[tDims];
+      for(uint t=0; t<tDims; ++t)
+	pointt[t] = IsBRT?(float) BRT.RF[t]:(float) PRO.RF[t];
     }
     if(!strcmp(SU.FieldsName[i],"ELV")){
       cout<<SU.FieldsName[i]<<" Elevation"<<endl;

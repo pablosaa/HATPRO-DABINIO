@@ -86,7 +86,7 @@ bool hatpro::BRT_var::Read_BinFile(const char *foutname){
     fre.read((char *) &TimeSec[i], sizeof(int));
     char RFtmp;
     fre.read((char *) &RFtmp, sizeof(char));
-    RF[i] = atoi((const char *) &RFtmp);
+    RF[i] = (int) RFtmp;
 
     fre.read((char *) TB[i], Nfreq*(Nang+1)*sizeof(float));
 
@@ -190,7 +190,7 @@ bool hatpro::PRO_var::Read_BinFile(const char *filename){
     fin.read((char *) &TimeSec[i], sizeof(int));
     char RFtmp;
     fin.read((char *) &RFtmp, sizeof(char));
-    RF[i] = atoi((const char *) &RFtmp);
+    RF[i] = (int) RFtmp;
 
     fin.read((char *) PRO[i], Nalt*sizeof(float));
 
@@ -321,7 +321,7 @@ bool hatpro::PRO_var::Create_BinFile(const char *foutname){
     return false;
   }
   
-  if(code==HPCcode || code==HPCcode+11)
+  if(code==HPCcode || code==HPCcode+1)
     fname.replace(idx+1, 3, "HPC");
   if(code==TPCcode)
     fname.replace(idx+1, 3, "TPC");
@@ -349,14 +349,12 @@ bool hatpro::PRO_var::Create_BinFile(const char *foutname){
      code==HPCcode || code==HPCcode+1 || code==STAcode)
     fwr.write((char *) Alts, Nalt*sizeof(int));
   
-    cout<<"inside the code PRO "<< code << endl;
-  
 
   for(int i=0; i<Ndata; ++i){
     fwr.write((char *) &TimeSec[i], sizeof(int));
-    char RFtmp = static_cast<char>(RF[i]);
+    char RFtmp = static_cast<char>(RF[i]>0?1:0);
     
-    fwr.write((char *) &RF[i], sizeof(char));
+    fwr.write((char *) &RFtmp, sizeof(char));
     
     fwr.write((char *) PRO[i], Nalt*sizeof(float));
 
@@ -369,12 +367,11 @@ bool hatpro::PRO_var::Create_BinFile(const char *foutname){
 
   if(code==HPCcode+1){
     float TMPminmax[2];
-    int TMPtime;
-    char TMPrf;
+    hatpro::minmax_value(PRO2, Ndata, 1, Nalt, &TMPminmax[0], &TMPminmax[1]);
     fwr.write((char *) TMPminmax, 2*sizeof(float));
     for(int i=0; i<Ndata; ++i){
       fwr.write((char *) &TimeSec[i], sizeof(int));
-      fwr.write((char *) &RF[i], sizeof(int));
+      fwr.write((char *) &RF[i], sizeof(char));
       fwr.write((char *) PRO2[i], Nalt*sizeof(float));
     }
   }
@@ -569,9 +566,8 @@ int hatpro::WhatAmI(int code){
     cout<<"% TPB file, Boundary Layer Temperature Profile";
     break;
   case HPCcode:
-    cout<<"% HPC file, Humidity Profile without RH";
   case HPCcode+1:
-    cout<<"% HPC file, Humidity Profile with RH";
+    cout<<"% HPC file, Humidity Profile (w/o RH profile)";
     break;
   case LPRcode:
     cout<<"% LPR file, Liquid Water Profile";
@@ -745,243 +741,4 @@ void hatpro::ShowLicense(){
   std::cout<<"SEE LICENSE.TXT"<<std::endl;
 }
 
-/* Function to select the subset to apply the retrieval algorithm */
-// int Select_SubSet(MWR_hatpro DATA){ //(float *TB, float *PD, float Elevation){
-
-  
-//   bool TBandPD=true;
-//   int DelTB[3] = {2,3,4};
-//   int DelPD[3] = {1,2,3};    // delta TB and PD in K to select the subset.
-//   int i,j=0, Nidx = 0;
-//   int index[N_X];  //[N_Xang[0]];
-//   float TB[3], PD[3], Elevation;
-
-
-  // TB[0] = DATA.TB[0];
-  // TB[1] = DATA.TB[1];
-  // TB[2] = DATA.TB[2];
-  // PD[0] = DATA.PD[0];
-  // PD[1] = DATA.PD[1];
-  // PD[2] = DATA.PD[2];
-  // Elevation = DATA.Eleva;
-
-  // if ((PD[0]>-1 & PD[0]<1) & (PD[1]>-1 & PD[1]<1) & (PD[2]>-1 & PD[2]<1))
-  //     TBandPD = false;
-
-  // // selecting the index for the elevation angle.
-  // idx_A = -1;
-  // for (i=0;i<N_A;i++) if (Elevation==Angles[i]) idx_A = i;
-  // if (idx_A == -1) return(-1);   // no database available for that angle.
-
-  // while (Nidx<20 && j<3){
-  //   Nidx = 0;
-  //   for (i=0;i<N_X; i++){   //ang[idx_A];i++){
-  //     if (TBandPD){
-  // 	if (DataBase[idx_A][i][0]>TB[0]-DelTB[j] & DataBase[idx_A][i][0]<TB[0]+DelTB[j] &
-  // 	    DataBase[idx_A][i][1]>TB[1]-DelTB[j] & DataBase[idx_A][i][1]<TB[1]+DelTB[j] &
-  // 	    DataBase[idx_A][i][2]>TB[2]-DelTB[j] & DataBase[idx_A][i][2]<TB[2]+DelTB[j] &
-  // 	    DataBase[idx_A][i][3]>PD[0]-DelPD[j] & DataBase[idx_A][i][3]<PD[0]+DelPD[j] &
-  // 	    DataBase[idx_A][i][4]>PD[1]-DelPD[j] & DataBase[idx_A][i][4]<PD[1]+DelPD[j] &
-  // 	    DataBase[idx_A][i][5]>PD[2]-DelPD[j] & DataBase[idx_A][i][5]<PD[2]+DelPD[j])
-  // 	  index[Nidx++] = i;
-  //     }
-  //     else{
-  // 	if (DataBase[idx_A][i][0]>TB[0]-DelTB[j] & DataBase[idx_A][i][0]<TB[0]+DelTB[j] &
-  // 	    DataBase[idx_A][i][1]>TB[1]-DelTB[j] & DataBase[idx_A][i][1]<TB[1]+DelTB[j] &
-  // 	    DataBase[idx_A][i][2]>TB[2]-DelTB[j] & DataBase[idx_A][i][2]<TB[2]+DelTB[j] &
-  // 	    DataBase[idx_A][i][3]>-1 & DataBase[idx_A][i][3]<0.2 &
-  // 	    DataBase[idx_A][i][4]>-1 & DataBase[idx_A][i][4]<0.2 &
-  // 	    DataBase[idx_A][i][5]>-1 & DataBase[idx_A][i][5]<0.2) index[Nidx++] = i;
-  //     }
-  //   }
-  //   j++;
-  // }
-//   idx = new int[Nidx];
-//   for (i=0;i<Nidx;i++) idx[i]=index[i];
-//   return(Nidx);
-//   delete [] idx;
-// }
-
-
-/* Bayesian function for the inversion of TB,PD to IWV,C_LWP and R_LWP
-   It is assumed that the database and the selected indexes are declared
-   as global variables */
-// RET_var Bayesian_Function(int Nidx, float* TBm, float* PDm){
-
-//   bool TBandPD = true;
-//   float delta[Nidx],A=0;
-//   float TBret[3]={0,0,0}, PDret[3]={0,0,0};
-//   float sigTBret[3]={0,0,0}, sigPDret[3]={0,0,0};
-//   float W[Nidx];
-//   float const SigmaTB[3]={2,1,1},SigmaPD[3]={.5,.5,.5};
-//   float QIret=0, FLret=0, IWVret=0, CLWPret=0, RLWPret=0;
-//   float sigFLret=0, sigIWVret=0, sigCLWPret=0, sigRLWPret=0;
-//   float QImin=99e9;
-//   int i,j,k;
-//   RET_var ATMOS;
-
-//   if ((PDm[0]>-1 & PDm[0]<1) & (PDm[1]>-1 & PDm[1]<1) & (PDm[2]>-1 & PDm[2]<1))
-//       TBandPD = false;
-
-//   //delta = new float[Nidx];
-//   for(i=0;i<Nidx;i++){
-//     // calculating the distance between points...
-//     delta[i] =
-//       (TBm[0]-DataBase[idx_A][idx[i]][0])*(TBm[0]-DataBase[idx_A][idx[i]][0])/
-//       (SigmaTB[0]*SigmaTB[0]) +
-//       (TBm[1]-DataBase[idx_A][idx[i]][1])*(TBm[1]-DataBase[idx_A][idx[i]][1])/
-//       (SigmaTB[1]*SigmaTB[1]) +
-//       (TBm[2]-DataBase[idx_A][idx[i]][2])*(TBm[2]-DataBase[idx_A][idx[i]][2])/
-//       (SigmaTB[2]*SigmaTB[2]) +
-//       (PDm[0]-DataBase[idx_A][idx[i]][3])*(PDm[0]-DataBase[idx_A][idx[i]][3])/
-//       (SigmaPD[0]*SigmaPD[0]) +
-//       (PDm[1]-DataBase[idx_A][idx[i]][4])*(PDm[1]-DataBase[idx_A][idx[i]][4])/
-//       (SigmaPD[1]*SigmaPD[1]) +
-//       (PDm[2]-DataBase[idx_A][idx[i]][5])*(PDm[2]-DataBase[idx_A][idx[i]][5])/
-//       (SigmaPD[2]*SigmaPD[2]);
-//     // calculating weigthing function...
-//     W[i] = exp(-0.5*delta[i]);
-//     A += W[i];
-//     // calculating the minimum QI.
-//     if (QImin>=delta[i]) QImin = delta[i];
-//   }
-//   if (A == 0){
-//     // NOT POSSIBLE TO RETRIEVED
-//     for (i=0;i<3;i++){
-//       ATMOS.TBret[i] = 0.0/0.0; //-99;
-//       ATMOS.PDret[i] = 0.0/0.0; //-99;
-//       ATMOS.sigTB[i] = 0.0/0.0; //-99;
-//       ATMOS.sigPD[i] = 0.0/0.0; //-99;
-//     }
-//   ATMOS.IWV = 0.0/0.0; //-99;
-//   ATMOS.CLWP = 0.0/0.0; //-99;
-//   ATMOS.RLWP = 0.0/0.0; //-99;
-//   ATMOS.QI   = 0.0/0.0;
-//   ATMOS.FL   = 0.0/0.0; //-99;
-//   ATMOS.sigIWV = 0.0/0.0; //-99;
-//   ATMOS.sigCLWP = 0.0/0.0; //-99;
-//   ATMOS.sigRLWP = 0.0/0.0; //-99;
-//   ATMOS.sigFL = 0.0/0.0; //-99;
-//   return(ATMOS);
-//   }
-//   // CALCULATING THE RETRIEVALS:
-//   for (i=0;i<Nidx;i++){
-//     TBret[0] += DataBase[idx_A][idx[i]][0]*W[i]/A;
-//     TBret[1] += DataBase[idx_A][idx[i]][1]*W[i]/A;
-//     TBret[2] += DataBase[idx_A][idx[i]][2]*W[i]/A;
-//     PDret[0] += DataBase[idx_A][idx[i]][3]*W[i]/A;
-//     PDret[1] += DataBase[idx_A][idx[i]][4]*W[i]/A;
-//     PDret[2] += DataBase[idx_A][idx[i]][5]*W[i]/A;
-//     CLWPret +=  DataBase[idx_A][idx[i]][6]*W[i]/A;
-//     RLWPret +=  DataBase[idx_A][idx[i]][7]*W[i]/A;
-//     IWVret += DataBase[idx_A][idx[i]][8]*W[i]/A;
-//     //QIret += delta[i]*W[i]/A;
-//     FLret += Flevel[idx[i]]*W[i]/A; //DataBase[idx_A][idx[i]][0]*W[i]/A;
-//   }
-//   // CLWPret = pow(10,CLWPret)-1e-10;
-//   // RLWPret = pow(10,RLWPret)-1e-10;
-
-//   // Calculating the RMS:
-//   for (i=0;i<Nidx;i++){
-//     sigTBret[0] += pow((DataBase[idx_A][idx[i]][0]-TBret[0]),2)*W[i]/A;
-//     sigTBret[1] += pow((DataBase[idx_A][idx[i]][1]-TBret[1]),2)*W[i]/A;
-//     sigTBret[2] += pow((DataBase[idx_A][idx[i]][2]-TBret[2]),2)*W[i]/A;
-//     sigPDret[0] += pow((DataBase[idx_A][idx[i]][3]-PDret[0]),2)*W[i]/A;
-//     sigPDret[1] += pow((DataBase[idx_A][idx[i]][4]-PDret[1]),2)*W[i]/A;
-//     sigPDret[2] += pow((DataBase[idx_A][idx[i]][5]-PDret[2]),2)*W[i]/A;
-//     sigCLWPret +=  pow(DataBase[idx_A][idx[i]][6]-CLWPret,2)*W[i]/A;
-//     sigRLWPret +=  pow(DataBase[idx_A][idx[i]][7]-RLWPret,2)*W[i]/A;
-//     sigIWVret += pow((DataBase[idx_A][idx[i]][8]-IWVret),2)*W[i]/A;
-//     sigFLret += pow((Flevel[idx[i]]-FLret),2)*W[i]/A;
-//   }
-//   // sigCLWPret = pow(10,sigCLWPret)-1e-10;
-//   // sigRLWPret = pow(10,sigRLWPret)-1e-10;
-
-//   if (!TBandPD){RLWPret =0.; sigRLWPret = 0.;}
-
-//   for (i=0;i<3;i++){
-//     ATMOS.TBret[i] = TBret[i];
-//     ATMOS.PDret[i] = PDret[i];
-//     ATMOS.sigTB[i] = sqrt(sigTBret[i]);
-//     ATMOS.sigPD[i] = sqrt(sigPDret[i]);
-//   }
-//   ATMOS.IWV = IWVret;
-//   ATMOS.CLWP = CLWPret; 
-//   ATMOS.RLWP = RLWPret;
-//   ATMOS.QI   = QImin; //QIret;
-//   ATMOS.FL   = FLret;
-//   ATMOS.sigIWV = sqrt(sigIWVret);
-//   ATMOS.sigCLWP = sqrt(sigCLWPret);
-//   ATMOS.sigRLWP = sqrt(sigRLWPret);
-//   ATMOS.sigFL = sqrt(sigFLret);
-//   return ATMOS;
-// }
-
-
-// /* Function to save the retrieval result in the specified file */
-// void SaveRetrieval(char * filename, MWR_hatpro DATA, RET_var RET){
-
-//   ofstream out;
-//   out.open(filename,ios::out|ios::app);
-
-//   out<<setprecision(2)<<setfill(' ')<<fixed;
-//   out<<setw(10)<<DATA.TimeSec
-//      <<setw(8)<<DATA.TB[0]<<setw(8)<<DATA.TB[1]<<setw(8)<<DATA.TB[2]
-//     //     <<setw(8)<<DATA.PD[0]<<setw(8)<<DATA.PD[1]<<setw(8)<<DATA.PD[2]
-//      <<setw(8)<<RET.TBret[0]<<setw(8)<<RET.sigTB[0]
-//      <<setw(8)<<RET.TBret[1]<<setw(8)<<RET.sigTB[1]
-//      <<setw(8)<<RET.TBret[2]<<setw(8)<<RET.sigTB[2]
-//      <<setw(8)<<RET.PDret[0]<<setw(8)<<RET.sigPD[0]
-//      <<setw(8)<<RET.PDret[1]<<setw(8)<<RET.sigPD[1]
-//      <<setw(8)<<RET.PDret[2]<<setw(8)<<RET.sigPD[2]
-//      <<setw(8)<<RET.QI<<setw(8)<<RET.FL<<setw(8)<<RET.sigFL
-//      <<setw(8)<<RET.IWV<<setw(8)<<RET.sigIWV
-//      <<setw(8)<<RET.CLWP<<setw(8)<<RET.sigCLWP
-//      <<setw(8)<<RET.RLWP<<setw(8)<<RET.sigRLWP;
-//     //<<setw(8)<<DATA.Eleva<<setw(8)<<DATA.Azimuth<<endl;
-
-//   out.close();
-// }
-// end of program.
-
-
-// int Load_DataBase(char *DatabaseFile){
-//   // ******* New version with constant DATABASE matrix  ******//
-//   /* DataBase structure: (N_A,N_X,N_Y)
-//      N_A number of elevation angles (normally 24).
-//      N_X number of simulation per angle.
-//      N_Y number of variables in data-base, normally 9 as follow:
-//      1,2 and 3: TB at 10, 21 and 36 GHz,
-//      4,5 and 6: PD at 10, 21 and 36 GHz,
-//      7: cloud LWP [kg/m^2],
-//      8: rain LWP [kg/m^2],
-//      9: IWV [kg/m^2].
-//   */
-//   int i,j,k, N_Y;
-//   float garbage[15];
-//   ifstream in;
-//   in.open(DatabaseFile,ios::in|ios::binary);
-//   in.read((char *) &N_A, sizeof N_A);
-//   in.read((char *) &N_Y, sizeof N_Y);
-//   in.read((char *) &N_X, sizeof N_X);
-//   Angles = new float[N_A];
-//   Flevel = new float[N_X];
-//   in.read((char *) Angles, N_A*sizeof(float));
-//   in.read((char *) Flevel, N_X*sizeof(float));
-//   cout<<N_A<<' '<<N_Y<<' '<<N_X<<' '<<DatabaseFile<<endl;
-//   DataBase = new float**[N_A];
-
-//   for(k=0;k<N_A;k++){
-//     //N_X = N_Xang[k];
-//     DataBase[k] = new float*[N_X];
-//     for (i=0;i<N_X;i++){
-//       in.read((char *) &garbage, N_Y*sizeof(float)); //garbage);
-//       DataBase[k][i] = new float[N_Y];
-//       for (j=0;j<N_Y;j++) DataBase[k][i][j] = garbage[j];
-//     }
-//   }
-//   in.close();
-
-//   return(0);
-// }   // end of loading the database.
 

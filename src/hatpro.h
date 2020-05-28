@@ -167,10 +167,10 @@ namespace hatpro {
 	ELV = new float[Ndata];
       }
       PRO = new float*[Ndata];
-      if(code==HPCcode+1) PRO2 = new float*[Ndata];
+      PRO2 = new float*[Ndata]; //if(code==HPCcode+1) 
       for(int i=0;i<Ndata;++i){
 	PRO[i] = new float[Nalt];
-	if(code==HPCcode+1) PRO2[i] = new float[Nalt];
+	PRO2[i] = new float[Nalt]; //if(code==HPCcode+1) 
       }
     }
   };  // end of Class PRO_var for Atmospheric Profiler
