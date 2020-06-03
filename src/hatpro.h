@@ -186,18 +186,12 @@ namespace hatpro {
   int WhatAmI(int);
   void minmax_value(float **, int, int, int, float [], float []);
   // Subroutine to convert TimeSeconds from 2001.1.1 00:00:00 to Calendar Format:
-  void TimeSec2Date(int, int* , int, float **);
+
+  float** TimeSec2Date(int, int*);
   void Date2TimeSec(float **, int, int *);
   // --------------------------------------------------
   void ShowLicense();
-  //{
-  // std::cout<<"HATPRO_DABINIO library."<<std::endl;
 
-  //std::cout<<"(c) 2019 Pablo Saavedra Garfias., Email: pablo.saa@uib.no"<<std::endl;
-  //std::cout<<"Geophysical Institute, University of Bergen"<<std::endl;
-
-  //std::cout<<"SEE LICENSE.TXT"<<std::endl;
-  //};
   
 } // end of namespace
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

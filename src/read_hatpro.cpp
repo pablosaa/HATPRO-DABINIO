@@ -56,12 +56,10 @@ mxArray *DataFile2MexStruct(const char *FileName){
 
   uint NELEN[4] = {tDims, fDims, aDims, hDims};
 
+  // ------
   // Converting RPG time format to year,month,day,hour,min,secs:
   float **date;
-  date = new float*[tDims];
-  for(uint i=0; i<tDims; ++i) date[i] = new float[6];
-
-  hatpro::TimeSec2Date(tDims, IsBRT?BRT.TimeSec:PRO.TimeSec, tDims, date);
+  date = hatpro::TimeSec2Date(tDims, IsBRT?BRT.TimeSec:PRO.TimeSec);
 
   for(size_t i=0;i<SU.NFields;++i) cout<<SU.FieldsName[i]<<" ";  
   cout<<endl;
