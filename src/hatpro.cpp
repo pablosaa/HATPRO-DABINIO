@@ -26,7 +26,7 @@ bool hatpro::BRT_var::Read_BinFile(const char *foutname){
   }
 
   fre.read((char *) &Ndata, sizeof(int));
-  
+
   if(code==BRTcode || code==BRTcode-1 || code==ATNcode){
     Nang = 0;
     fre.read((char *) &TimeRef, sizeof(int));
@@ -75,7 +75,7 @@ bool hatpro::BRT_var::Read_BinFile(const char *foutname){
       Nang += (c & 0x01)?1:0;
     //std::cout<<"AddSensor is: "<<AddSensor<<" NaddS="<<Nang<<std::endl;
     Nfreq = 3+Nang;  // for Pressure, Temperature and RH + extra sensor
-    Nang = 0;        // Reset 
+    Nang = 0;        // Reset
     Initialize_it();
     fre.read((char *) BRTMin, Nfreq*sizeof(float));
     fre.read((char *) BRTMax, Nfreq*sizeof(float));
@@ -95,6 +95,9 @@ bool hatpro::BRT_var::Read_BinFile(const char *foutname){
       fre.read((char *) &Ang[i], sizeof(Ang[0]));
       hatpro::Angular2ElAzi(Ang[i], ELV[i], AZI[i]);
     }
+
+    // Testing for cases of Wetting or RFI:
+
   }
   fre.close();
   return true;
@@ -102,53 +105,162 @@ bool hatpro::BRT_var::Read_BinFile(const char *foutname){
 // -----------------------------------
 
 
-// **********************************************
-// Funtion to read MET binary data file:
-bool hatpro::MET_var::Read_BinFile(const char * filename){
-  ifstream fin;
-  //int Ndat, METcode;
-  //char AddSensor;
-  fin.open(filename,ios::in|ios::binary);
-  if(!fin.good()){
-    cout<<"ERROR: sorry, MET file cannot be opened!"<<endl;
-    return false;
-  }
+// *************************************************************
+//
+// Function to assign flags for Brightness Temperature quality assessment
+// INPUT:
+// * TB -> hatpro::BRT_var variable type with data,
+// * TBhat -> reference data based on simulations,
+//
+// OUTPUT:
+// * 1-D array with dimension TB.Ndata containing a
+// 2 Byte little-endian flag quality indicator as:
+// bit 1 (LSB): wetting/interference evaluation (0=good, 1=warning),
+// bit 2: when any k-band frequency TB shows saturation or RFI,
+// bit 3-9: for specific V-band frequency higher than threshold,
+// bit 10-17: for every K-band frequency higher than threshold.
+// EXAMPLE:
+// 0xFFC2 = 1111 1111 1100 0010
+// meaning bit1 = 0 (no wetting or RFI),
+// bit2 = 1 (K-band shows possible saturation),
+// bit7-bit9 = 1 (lowest 3 V-band frequencies exceed threshold),
+// bit10-bit17 = 1 (all K-band frequencies exceed threshold).
+//
+// Data needed to be stored in TBhat_threshold.dat is:
+// TBhat[] = {18.287, 18.072, 16.693, 15.620, 13.634, 13.145, 14.063,
+//           102.171, 141.140, 235.794, 263.933, 269.061, 269.605, 269.996};
+// TBthr[] = {1.4, 1.45, 1.6, 1.72, 1.85, 2.1, 2.3,
+//           0.7, 0.5, 0.095, 0.04, 0.035, 0.035, 0.035};
+// Part of HATPRO-DABINIO library.
+short *hatpro::BRT_var::FlagTB_RIF_Wet(){
 
-  fin.read((char *) &code, sizeof(int));
-  if(myChildren.count(code)==0){
-    fin.close();
-    return false;
-  }
-    
-  fin.read((char *) &Ndata, sizeof(int));
-  fin.read((char *) &AddSensor, sizeof(char));
-  //hatpro::MET_var MET(Ndat,AddSensor);
-  Initialized_it();
-  //MET.METcode = METcode;
-  fin.read((char *) &MinP, sizeof(float));
-  fin.read((char *) &MaxP, sizeof(float));
-  fin.read((char *) &MinT, sizeof(float));
-  fin.read((char *) &MaxT, sizeof(float));
-  fin.read((char *) &MinH, sizeof(float));
-  fin.read((char *) &MaxH, sizeof(float));
-  for(int i=0;i<NaddS;++i){
-    fin.read((char *) &MinAddS[i], sizeof(float));
-    fin.read((char *) &MaxAddS[i], sizeof(float));
-  }
-  fin.read((char *) &TimeRef, sizeof(int));
-  for(int i=0;i<Ndata;++i){
-    fin.read((char *) &TimeSec[i], sizeof(int));
-    char RFtmp;
-    fin.read((char *) &RFtmp, sizeof(char));
-    RF[i] = atoi((const char *) &RFtmp);
+    // Checking first whether this function can be applied:
+    // This function is only viable to BRT and BLB files.
+    if(code!=BRTcode && code!=BLBcode) return NULL;
 
-    fin.read((char *) PTH[i], 3*sizeof(float));
-    fin.read((char *) ExSensor[i], NaddS*sizeof(float));
-  }
-  
-  fin.close();
-  return true;
+    // Retrieving in-house binary TB base and thresholds
+    // stored in TBhat_threshold.dat binary file and linked
+    // as > ld -r -b binary -o TBhat_threshold.o TBhat_threshold.dat
+    // during compilation use TBhat_threshold.o to link with the source.
+//    extern char _binary_TBhat_threshold_dat_start;
+//    extern char _binary_TBhat_threshold_dat_end;
+//    extern const size_t _binary_TBhat_threshold_dat_size;
+//
+//	char*  p = &_binary_TBhat_threshold_dat_start;
+//
+//	size_t NSimu = ((size_t) &_binary_TBhat_threshold_dat_size)/sizeof(p);
+//	float *TBhat = new float[NSimu];
+//	float *TBthr = new float[NSimu];
+//
+//	memcpy(TBhat, p, NSimu*sizeof(float));
+//	memcpy(TBthr, (p+sizeof(float)*NSimu), NSimu*sizeof(float));
+    const float TBhat[] = {18.287, 18.072, 16.693, 15.620, 13.634, 13.145, 14.063,
+           102.171, 141.140, 235.794, 263.933, 269.061, 269.605, 269.996};
+    const float TBthr[] = {1.4, 1.45, 1.6, 1.72, 1.85, 2.1, 2.3,
+           0.7, 0.5, 0.095, 0.04, 0.035, 0.035, 0.035};
+    // --- end of retrieving TBhat and TBthr from memory.
+
+    // return parameter array:
+	short *RFI = new short[Ndata];
+
+    // switcher for long wet periods:
+    bool switcher = false;
+
+    size_t IdxElv = code==BRTcode?1:Nang+1;
+
+    // "faktor" is a TB zenith normalization factor:
+	float faktor = 1;
+    if(code == BLBcode) faktor = 1/cos(DEG2RAD*(90.0-ELV[0]));
+
+	for(size_t k=0; k<Ndata; ++k){
+        short band_flag = 0x0000;
+        bool ratio_flag = true;
+        bool simul_flag = false;
+
+        if(code==BRTcode) faktor = 1/cos(DEG2RAD*(90.0-ELV[k]));
+        for(size_t j=0; j<Nfreq; j++){
+            size_t idx = j*IdxElv;
+            // For reference base delta function:
+            float delta = ((faktor*TB[k][idx] - TBhat[j])/TBhat[j]);
+            if(delta > TBthr[j]) band_flag |= (0x0001<<j);
+
+            // For frequency ration of TBs:
+            if(j<5) {
+                float ratio_TB = TB[k][6*IdxElv]/TB[k][idx];
+                ratio_flag &= ratio_TB >= 0.72?true:false;
+            }
+        }
+	// Check whether all K-band channels are flagged?
+	simul_flag = (0x7F & (band_flag>>7))==0x7F;
+
+    //Applying Filter for simulation based threshold:
+	band_flag <<= 2;
+
+	// Applying Filter for TB ratio:
+	if(ratio_flag) band_flag |= 0x02;
+
+	if(RF[k]==1 || simul_flag) switcher = true;
+	if(switcher){
+        band_flag |= ratio_flag?0x01:0x00;
+        switcher = ratio_flag;
+	}
+
+	RFI[k] = band_flag;
+	}  // end over k
+
+	return(RFI);
 }
+// ---end of FlagTB_RFI_Wet() function.
+
+
+//
+//// **********************************************
+//// Funtion to read MET binary data file:
+//bool hatpro::MET_var::Read_BinFile(const char * filename){
+//  ifstream fin;
+//  //int Ndat, METcode;
+//  //char AddSensor;
+//  fin.open(filename,ios::in|ios::binary);
+//  if(!fin.good()){
+//    cout<<"ERROR: sorry, MET file cannot be opened!"<<endl;
+//    return false;
+//  }
+//
+//  fin.read((char *) &code, sizeof(int));
+//  if(myChildren.count(code)==0){
+//    fin.close();
+//    return false;
+//  }
+//
+//  fin.read((char *) &Ndata, sizeof(int));
+//  fin.read((char *) &AddSensor, sizeof(char));
+//  //hatpro::MET_var MET(Ndat,AddSensor);
+//  Initialized_it();
+//  //MET.METcode = METcode;
+//  fin.read((char *) &MinP, sizeof(float));
+//  fin.read((char *) &MaxP, sizeof(float));
+//  fin.read((char *) &MinT, sizeof(float));
+//  fin.read((char *) &MaxT, sizeof(float));
+//  fin.read((char *) &MinH, sizeof(float));
+//  fin.read((char *) &MaxH, sizeof(float));
+//  for(int i=0;i<NaddS;++i){
+//    fin.read((char *) &MinAddS[i], sizeof(float));
+//    fin.read((char *) &MaxAddS[i], sizeof(float));
+//  }
+//  fin.read((char *) &TimeRef, sizeof(int));
+//  for(int i=0;i<Ndata;++i){
+//    fin.read((char *) &TimeSec[i], sizeof(int));
+//    char RFtmp;
+//    fin.read((char *) &RFtmp, sizeof(char));
+//    RF[i] = atoi((const char *) &RFtmp);
+//
+//    fin.read((char *) PTH[i], 3*sizeof(float));
+//    fin.read((char *) ExSensor[i], NaddS*sizeof(float));
+//  }
+//
+//  fin.close();
+//  return true;
+//}
 
 // ---------------------------------------------------------
 // Function to read Profiler variables binary data files,
@@ -161,13 +273,13 @@ bool hatpro::PRO_var::Read_BinFile(const char *filename){
     cout<<"ERROR: sorry, file cannot be opened!"<<endl;
     return false;
   }
-  
+
   fin.read((char *) &code, sizeof(int));
   if(myChildren.count(code)==0){
     fin.close();
     return false;
   }
-  
+
   fin.read((char *) &Ndata, sizeof(int));
   fin.read((char *) &PROMin, sizeof(float));
   fin.read((char *) &PROMax, sizeof(float));
@@ -175,14 +287,14 @@ bool hatpro::PRO_var::Read_BinFile(const char *filename){
   if(code!=BLHcode && code!=CBHcode && code!=STAcode)
     fin.read((char *) &Retrieval, sizeof(int));
 
-  if(code==LWPcode || code==IWVcode || 
+  if(code==LWPcode || code==IWVcode ||
      code==BLHcode || code==CBHcode) Nalt = 1;
   else if(code==STAcode) Nalt = 6;
   else fin.read((char *) &Nalt, sizeof(int));
 
   Initialized_it();
 
-  if(code==TPCcode || code==TPBcode || 
+  if(code==TPCcode || code==TPBcode ||
      code==HPCcode || code==HPCcode+1 || code==STAcode)
     fin.read((char *) Alts, Nalt*sizeof(int));
 
@@ -197,7 +309,7 @@ bool hatpro::PRO_var::Read_BinFile(const char *filename){
     if(code==LWPcode || code==IWVcode){
       float ANG;
       fin.read((char *) &ANG, sizeof(float));
-      hatpro::Angular2ElAzi(ANG, ELV[i], AZI[i]);      
+      hatpro::Angular2ElAzi(ANG, ELV[i], AZI[i]);
     }
   }
   if(code==HPCcode+1){
@@ -320,7 +432,7 @@ bool hatpro::PRO_var::Create_BinFile(const char *foutname){
     cout<<"Are you sure this is a valid file name?"<<endl;
     return false;
   }
-  
+
   if(code==HPCcode || code==HPCcode+1)
     fname.replace(idx+1, 3, "HPC");
   if(code==TPCcode)
@@ -340,22 +452,22 @@ bool hatpro::PRO_var::Create_BinFile(const char *foutname){
   fwr.write((char *) &TimeRef, sizeof(int));
   fwr.write((char *) &Retrieval, sizeof(int));
 
-  if(code==LWPcode || code==IWVcode || 
+  if(code==LWPcode || code==IWVcode ||
      code==BLHcode || code==CBHcode) Nalt = 1;
   else if(code==STAcode) Nalt = 6;
   else fwr.write((char *) &Nalt, sizeof(int));
 
-  if(code==TPCcode || code==TPBcode || 
+  if(code==TPCcode || code==TPBcode ||
      code==HPCcode || code==HPCcode+1 || code==STAcode)
     fwr.write((char *) Alts, Nalt*sizeof(int));
-  
+
 
   for(int i=0; i<Ndata; ++i){
     fwr.write((char *) &TimeSec[i], sizeof(int));
     char RFtmp = static_cast<char>(RF[i]>0?1:0);
-    
+
     fwr.write((char *) &RFtmp, sizeof(char));
-    
+
     fwr.write((char *) PRO[i], Nalt*sizeof(float));
 
     if(code==LWPcode || code==IWVcode){
@@ -404,7 +516,7 @@ void hatpro::MET_var::Create_BinFile(const char *foutname){
     fwr.write((char *) &RF[i], sizeof(char));
     fwr.write((char *) PTH[i], 3*sizeof(float));
     fwr.write((char *) ExSensor[i], NaddS*sizeof(float));
-  }  
+  }
   fwr.close();
   return;
 }  // ... End of Create MET binary file.
@@ -433,7 +545,7 @@ void hatpro::BRT_var::Print_Data(){
       cout<<setw(7)<<TimeSec[i]<<": ("<<AZI[i]<<","<<ELV[i]<<") "<<endl;
     else
       cout<<setw(7)<<TimeSec[i]<<": "<<endl;
-    
+
     cout<<setprecision(2)<<setfill(' ')<<fixed;
     for(int j=0;j<Nfreq;++j){
       if(code!=METcode) cout<<"f[GHz] "<<Freq[j]<<": ";
@@ -446,7 +558,7 @@ void hatpro::BRT_var::Print_Data(){
 
   delete [] date;
   // for(int i=0;i<10;++i) cout<<Datum[i][0]<<" "<<Datum[i][1]<<" "<<Datum[i][2]<<" "<<Datum[i][3]<<" "<<Datum[i][4]<<" "<<Datum[i][5]<<" "<<endl;
-  
+
   return;
 }  // ... End of Printing BRT data.
 // ----
@@ -502,12 +614,12 @@ void hatpro::MET_var::Print_Data(){
 
 // **************************************************
 //             OTHER SUBROUTINES OR FUNCTIONS
-// --------------------------------------------------- 
+// ---------------------------------------------------
 void hatpro::Angular2ElAzi(float ANG, float &ELV, float &AZI){
     double whole, fractional;
     float elv0, azi0;
     bool flag;
-    
+
     // Converting encoded ANG to AZIMUTH and ELEVATION values:
     flag = (ANG-1E6)<0?false:true;
     fractional = modf((double) ANG/100,&whole);
@@ -596,7 +708,7 @@ int hatpro::WhatAmI(int code){
 
 // *** Get File code from extention of the input file:
 int hatpro::GetExtFromFile(const char *infile){
-  // defining an operator to test true/false when compared with map 
+  // defining an operator to test true/false when compared with map
   struct cmp_str
   {
     bool operator()(char const *a, char const *b) const
@@ -620,7 +732,7 @@ int hatpro::GetExtFromFile(const char *infile){
   ext2code["LWP"] = LWPcode;
   ext2code["BLH"] = BLHcode;
   ext2code["CBH"] = CBHcode;
-  ext2code["STA"] = STAcode; 
+  ext2code["STA"] = STAcode;
 
   // Finding the input file's extension type:
   string garbage(infile);
@@ -644,7 +756,7 @@ int hatpro::GetExtFromFile(const char *infile){
 float** hatpro::TimeSec2Date(int N, int *TimeSec){
   time_t basetime, acttime;
   struct tm * time0, *timeF;
-  float **date; 
+  float **date;
   date = new float*[N];
   time(&basetime);
   time0 = gmtime(&basetime);
@@ -668,7 +780,7 @@ float** hatpro::TimeSec2Date(int N, int *TimeSec){
     date[i][5] = (float) timeF->tm_sec;
     //cout<<TimeSec[i]<<": "<<1900+timeF->tm_year<<"."<<1+timeF->tm_mon<<"."<<timeF->tm_mday<<" "<<timeF->tm_hour<<":"<<timeF->tm_min<<":"<<timeF->tm_sec<<"--->"<<asctime(timeF)<<endl;
   }
-  
+
   return(date);
 }
 // ---
@@ -702,7 +814,7 @@ void hatpro::Date2TimeSec(float **date, int ND, int *TimeSec){
     rpg_time = mktime(timeIN) - timezone - base_time;
     TimeSec[i] = (int) rpg_time;
   }
-  
+
   return;
 }
 // -----------------------------------------------------
@@ -728,7 +840,7 @@ void hatpro::minmax_value(float **DATA, int ND, int NF, int NA, float min[], flo
 
 void hatpro::ShowLicense(){
   std::cout<<"HATPRO_DABINIO library."<<std::endl;
-  
+
   std::cout<<"(c) 2019 Pablo Saavedra Garfias., Email: pablo.saa@uib.no"<<std::endl;
   std::cout<<"Geophysical Institute, University of Bergen"<<std::endl;
 

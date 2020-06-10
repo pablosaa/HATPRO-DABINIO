@@ -37,16 +37,26 @@ LIB_PATH = $(HOM_PATH)/lib
 BIN_PATH = $(HOM_PATH)/bin
 TMP_PATH = $(HOM_PATH)/build
 SRC_PATH = $(HOM_PATH)/src
+EMBED_DAT = $(TMP_PATH)/TBhat_threshold.o
 
-$(BIN_PATH)/test_hatprolib : $(TMP_PATH)/test_hatprolib.o $(LIB_PATH)/libhatpro.a $(LIB_PATH)/libhatpro.so
-	$(GCC) $(TMP_PATH)/test_hatprolib.o -o $@ -L$(LIB_PATH) -l:libhatpro.a
 
-$(LIB_PATH)/libhatpro.a: $(SRC_PATH)/hatpro.cpp $(SRC_PATH)/hatpro.h
+all: $(LIB_PATH)/libhatpro.so  $(LIB_PATH)/libhatpro.a
+	
+$(LIB_PATH)/libhatpro.a: $(SRC_PATH)/hatpro.cpp $(SRC_PATH)/hatpro.h 
 	$(GCC) $(MYFLAG) -fPIC -c $(SRC_PATH)/hatpro.cpp -o $(TMP_PATH)/hatpro.o
 	$(GAL) rcs $@ $(TMP_PATH)/hatpro.o
 
 $(LIB_PATH)/libhatpro.so: $(SRC_PATH)/hatpro.cpp $(SRC_PATH)/hatpro.h 
 	$(GCC) -fPIC -shared $(MYFLAG) $(SRC_PATH)/hatpro.cpp -o $@ 
+
+$(EMBED_DAT): $(SRC_PATH)/TBhat_threshold.dat
+	ld -r -b binary -o $@ $^
+
+example: $(BIN_PATH)/test_hatprolib
+
+
+$(BIN_PATH)/test_hatprolib : $(TMP_PATH)/test_hatprolib.o $(LIB_PATH)/libhatpro.a $(LIB_PATH)/libhatpro.so
+	$(GCC) $(TMP_PATH)/test_hatprolib.o -o $@ -L$(LIB_PATH) -l:libhatpro.a
 
 $(TMP_PATH)/test_hatprolib.o: $(SRC_PATH)/test_hatprolib.cpp $(SRC_PATH)/hatpro.h
 	$(GCC) -c $(MYFLAG) $< -o $@

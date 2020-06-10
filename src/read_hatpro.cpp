@@ -1,5 +1,5 @@
 // **********************************************************************************
-// 
+//
 // MEX Function to interact with Hatpro_Library from MATLAB/Octave
 // The Function reads HATPRO binary files and outputs as MATLAB structure with
 // field names corresponding to the type of file it belongs.
@@ -47,7 +47,7 @@ mxArray *DataFile2MexStruct(const char *FileName){
   // Reading File and Filling Class members:
   IsPRO = PRO.Read_BinFile(FileName);
   IsBRT = BRT.Read_BinFile(FileName);
-  
+
   // define dimension variables:
   uint tDims = IsPRO?PRO.Ndata:BRT.Ndata;  // time
   uint hDims = IsPRO?PRO.Nalt:0;  // height
@@ -61,7 +61,7 @@ mxArray *DataFile2MexStruct(const char *FileName){
   float **date;
   date = hatpro::TimeSec2Date(tDims, IsBRT?BRT.TimeSec:PRO.TimeSec);
 
-  for(size_t i=0;i<SU.NFields;++i) cout<<SU.FieldsName[i]<<" ";  
+  for(size_t i=0;i<SU.NFields;++i) cout<<SU.FieldsName[i]<<" ";
   cout<<endl;
 
   // Creating the structure to put the set of variable fields:
@@ -70,7 +70,7 @@ mxArray *DataFile2MexStruct(const char *FileName){
   for(size_t i=0;i<SU.NFields;++i){
     mxClassID  myID = mxDOUBLE_CLASS;
     uint xDim=1, yDim=1, zDim=1;   // temporal dimensions
-    mxArray *TMP = NULL;  
+    mxArray *TMP = NULL;
     float *pointt = NULL;
     float **point2D = NULL;
 
@@ -112,7 +112,7 @@ mxArray *DataFile2MexStruct(const char *FileName){
     }
 
     // Time depending 1D variables:
-    if(!strcmp(SU.FieldsName[i],"TIME")){      
+    if(!strcmp(SU.FieldsName[i],"TIME")){
       cout<<SU.FieldsName[i]<<" TIME "<<tDims<<endl;
       myID = mxDOUBLE_CLASS;
       xDim = tDims;
@@ -124,8 +124,15 @@ mxArray *DataFile2MexStruct(const char *FileName){
       myID = mxSINGLE_CLASS;
       xDim = tDims;
       pointt = new float[tDims];
+      // temporal for RFI testing:
+      short *RFI;
+      if(IsBRT) RFI = BRT.FlagTB_RIF_Wet();
+
       for(uint t=0; t<tDims; ++t)
-	pointt[t] = IsBRT?(float) BRT.RF[t]:(float) PRO.RF[t];
+        pointt[t] = IsBRT?(float) (0x01 & RFI[t]):(float) PRO.RF[t];
+	//pointt[t] = IsBRT?(float) BRT.RF[t]:(float) PRO.RF[t];
+
+    if(IsBRT) delete[](RFI);
     }
     if(!strcmp(SU.FieldsName[i],"ELV")){
       cout<<SU.FieldsName[i]<<" Elevation"<<endl;
@@ -139,8 +146,8 @@ mxArray *DataFile2MexStruct(const char *FileName){
       yDim = code==BLBcode? aDims: tDims;
       pointt = IsBRT?BRT.AZI: PRO.AZI;
     }
-    
-    if(!strcmp(SU.FieldsName[i],"IWV") || 
+
+    if(!strcmp(SU.FieldsName[i],"IWV") ||
        !strcmp(SU.FieldsName[i],"LWP") ||
        !strcmp(SU.FieldsName[i],"BLH") ){
       cout<<SU.FieldsName[i]<<" Integrated Water Vapour/ LWP"<<endl;
@@ -162,7 +169,7 @@ mxArray *DataFile2MexStruct(const char *FileName){
       zDim = aDims+1;
       point2D = BRT.TB;
     }
-    
+
     if(!strcmp(SU.FieldsName[i],"T") || !strcmp(SU.FieldsName[i],"QV")){
       myID = mxDOUBLE_CLASS;
       xDim = tDims;
@@ -184,11 +191,11 @@ mxArray *DataFile2MexStruct(const char *FileName){
     //TMP = mxCreateNumericMatrix(xDim, yDim, myID, mxREAL);
     const mwSize xyDims[3] = {(mwSize) xDim, (mwSize) yDim, (mwSize) zDim};
     TMP = mxCreateNumericArray((mwSize) 3, xyDims, myID, mxREAL);
-    
+
     // for 1D variables only:
     if(pointt!=NULL && point2D==NULL)
       memcpy(mxGetPr(TMP), pointt, xDim*yDim*sizeof(myID));
-    
+
     // for 2D variables:
     else if(pointt==NULL && point2D!=NULL){
       //cout<<"2D variable "<<xDim<<"x"<<yDim<<endl;
@@ -211,7 +218,7 @@ mxArray *DataFile2MexStruct(const char *FileName){
       metaux++;
     }
     else mexErrMsgTxt("both pointer are still NULL!!! :O");
-    
+
     mxSetFieldByNumber(stru,0,i,TMP);
 
     pointt  = NULL;
@@ -219,9 +226,9 @@ mxArray *DataFile2MexStruct(const char *FileName){
   } // end of NFields loop...
 
   delete[] date;
-  return(stru);  
+  return(stru);
 }   // End of Template Struct
-// -- 
+// --
 
 
 // ***********************************************************************
@@ -233,7 +240,7 @@ mxArray *DataFile2MexStruct(const char *FileName){
 void mexFunction(int nlhs, mxArray *plhs[],
                  int nrhs, const mxArray *prhs[]){
 
-  
+
   char *filen = NULL;
   vector<string> InFiles;
   bool MULTIFILES = false;
@@ -297,7 +304,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
     NTotalFiles += mxGetN(prhs[1]);
     // Extracting the file extension from base file name:
     size_t ppos = InFiles.at(0).find_last_of('.');
-  
+
     for(unsigned int i=0;i<NTotalFiles-1; ++i){
       mxArray *aFile = mxGetCell(prhs[1],i);
       if(!mxIsChar(aFile)) mexErrMsgTxt("Element cell is not a string");
@@ -318,7 +325,7 @@ void mexFunction(int nlhs, mxArray *plhs[],
   mxArray *stru2;
   for(uint i=0;i<NTotalFiles;++i){
     stru2 = DataFile2MexStruct(InFiles.at(i).c_str());
-    
+
     if(NTotalFiles>1) mxSetCell(plhs[0],i,stru2);
     else plhs[0] = stru2;
   }

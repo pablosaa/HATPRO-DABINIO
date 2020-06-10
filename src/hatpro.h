@@ -28,6 +28,7 @@ const int BLHcode = 1777786;
 const int CBHcode = 67777499;
 const int STAcode = 454532;
 
+#define DEG2RAD 3.141592/180
 /* Declaring the data base variable and the rows indexes.
    The number of elements depends on the number of simulations which
    are writen at the begining of the binary data file */
@@ -45,12 +46,12 @@ namespace hatpro {
     int code;                  // File type code number
     int Ndata;                 // Total Number of recorded samples
     int Nfreq;                 // Total Number of frequencies
-    int Nang;                  // Total Number of scaning angles
+    int Nang;                  // Total Number of scanning angles
     int TimeRef;               // Time reference (1:UTC, 0: Local Time)
     int Retrieval;             // 0:lin-reg, 1:^2-reg, 2: NN,3: Tmr
     float *BRTMin, *BRTMax;    // Min and Max of TB database [K]
     float *Freq;               // Frequencies for TB [GHz]
-    float *Ang;                // Scaning angles [deg]
+    float *Ang;                // Scanning angles [deg]
     int *TimeSec;              // Number of seconds since 1.01.2001
     int *RF;                  // binary Rain Flag: 0 no rain, 1 rain
     float *AZI;                // Azimuth angle [deg]   ( 00 to 360)
@@ -60,10 +61,12 @@ namespace hatpro {
   BRT_var() : Ndata(0), Nfreq(0), Nang(0) {}
   BRT_var(int ND, int NF, int NA) : Ndata(ND), Nfreq(NF), Nang(NA) {
       Initialize_it();
-    }    
+    }
     bool Read_BinFile(const char *filename);
     void Print_Data();
     void Create_BinFile(const char *foutname);
+    short *FlagTB_RIF_Wet();
+
   protected:
     std::set<int> myChildren = {BRTcode-1, BRTcode, BLBcode, OLCcode, ATNcode, METcode};
     void Initialize_it(){
@@ -101,7 +104,7 @@ namespace hatpro {
    int *RF;
    float **PTH;
    float **ExSensor;
-   
+
   MET_var() : Ndata(0), AddSensor('0') {}
 
   MET_var(int ND, char ADDS) : Ndata(ND), AddSensor(ADDS) {
@@ -167,17 +170,17 @@ namespace hatpro {
 	ELV = new float[Ndata];
       }
       PRO = new float*[Ndata];
-      PRO2 = new float*[Ndata]; //if(code==HPCcode+1) 
+      PRO2 = new float*[Ndata]; //if(code==HPCcode+1)
       for(int i=0;i<Ndata;++i){
 	PRO[i] = new float[Nalt];
-	PRO2[i] = new float[Nalt]; //if(code==HPCcode+1) 
+	PRO2[i] = new float[Nalt]; //if(code==HPCcode+1)
       }
     }
   };  // end of Class PRO_var for Atmospheric Profiler
 
-  
 
- 
+
+
   // ==================================================
   //    Definition of AUX FUNCTIONS and SUBROUTINES:
   void Angular2ElAzi(float , float &, float &);
@@ -192,8 +195,8 @@ namespace hatpro {
   // --------------------------------------------------
   void ShowLicense();
 
-  
-} // end of namespace
+
+} // end of HATPRO namespace
 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 #endif
