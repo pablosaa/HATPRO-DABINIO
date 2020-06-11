@@ -161,7 +161,7 @@ short *hatpro::BRT_var::FlagTB_RIF_Wet(){
     // --- end of retrieving TBhat and TBthr from memory.
 
     // return parameter array:
-	short *RFI = new short[Ndata];
+    short *RFI = new short[Ndata];
 
     // switcher for long wet periods:
     bool switcher = false;
@@ -169,46 +169,49 @@ short *hatpro::BRT_var::FlagTB_RIF_Wet(){
     size_t IdxElv = code==BRTcode?1:Nang+1;
 
     // "faktor" is a TB zenith normalization factor:
-	float faktor = 1;
+    float faktor = 1;
     if(code == BLBcode) faktor = 1/cos(DEG2RAD*(90.0-ELV[0]));
 
-	for(size_t k=0; k<Ndata; ++k){
-        short band_flag = 0x0000;
-        bool ratio_flag = true;
-        bool simul_flag = false;
+    // Loop over time series:
+    for(size_t k=0; k<Ndata; ++k){
+      
+      short band_flag = 0x0000;
+      bool ratio_flag = true;
+      bool simul_flag = false;
 
-        if(code==BRTcode) faktor = 1/cos(DEG2RAD*(90.0-ELV[k]));
-        for(size_t j=0; j<Nfreq; j++){
-            size_t idx = j*IdxElv;
-            // For reference base delta function:
-            float delta = ((faktor*TB[k][idx] - TBhat[j])/TBhat[j]);
-            if(delta > TBthr[j]) band_flag |= (0x0001<<j);
+      if(code==BRTcode) faktor = 1/cos(DEG2RAD*(90.0-ELV[k]));
+      for(size_t j=0; j<Nfreq; j++){
+	size_t idx = j*IdxElv;
+	// For reference base delta function:
+	float delta = ((faktor*TB[k][idx] - TBhat[j])/TBhat[j]);
+	if(delta > TBthr[j]) band_flag |= (0x0001<<j);
 
-            // For frequency ration of TBs:
-            if(j<5) {
-                float ratio_TB = TB[k][6*IdxElv]/TB[k][idx];
-                ratio_flag &= ratio_TB >= 0.72?true:false;
-            }
-        }
-	// Check whether all K-band channels are flagged?
-	simul_flag = (0x7F & (band_flag>>7))==0x7F;
+	// For frequency ration of TBs:
+	if(j<5) {
+	  float ratio_TB = TB[k][6*IdxElv]/TB[k][idx];
+	  ratio_flag &= ratio_TB >= 0.72?true:false;
+	}
+      }
+      // Check whether all K-band channels are flagged?
+      simul_flag = (0x7F & (band_flag>>7))==0x7F;
+      
+      //Applying Filter for simulation based threshold:
+      band_flag <<= 2;
 
-    //Applying Filter for simulation based threshold:
-	band_flag <<= 2;
+      // Applysing filter for TB simulation:
+      if(simul_flag) band_flag |= 0x02;
 
-	// Applying Filter for TB ratio:
-	if(ratio_flag) band_flag |= 0x02;
-
-	if(RF[k]==1 || simul_flag) switcher = true;
-	if(switcher){
+      // Applying Filter for TB ratio:
+      if(RF[k]==1 || simul_flag) switcher = true;
+      if(switcher){
         band_flag |= ratio_flag?0x01:0x00;
         switcher = ratio_flag;
-	}
+      }
+      
+      RFI[k] = band_flag;
+    }  // end over k
 
-	RFI[k] = band_flag;
-	}  // end over k
-
-	return(RFI);
+    return(RFI);
 }
 // ---end of FlagTB_RFI_Wet() function.
 

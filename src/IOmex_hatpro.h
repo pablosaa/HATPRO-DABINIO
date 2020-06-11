@@ -32,20 +32,21 @@ class MEXSTRUCT{
 MEXSTRUCT::MEXSTRUCT(int code){
   vector<int> idx;
   map<int, vector<int>> indexes;
-  const char *ListName[] = {"TIME","H","FRE","ELV","AZI",  // Dimension names: time, hight, freq, elv, azi {0 - 4}
-			    "RF","REF","RET", // Basic names: rain-flag, timeRef, retrieval-id {5-7}
+  const char *ListName[] = {"TIME","H","FREQ","ELV","AZI",  // Dimension names: time, hight, freq, elv, azi {0 - 4}
+			    "RF","UTC","RET", // Basic names: rain-flag, timeRef, retrieval-id {5-7}
 			    "TB","TAU",       // Measurement names: brightness temperature, attenuation {8-9}
 			    "QV","RH","T",    // Profile names: specific, relative humidity, Temperature {10-12}
 			    "P2m","T2m","RH2m", // Meteo names: Pressure, Temperature, RH {13-15}
 			    "WS","WD","RR",     // Meteo names: Windspeed, direction, rain rate {16-18}
 			    "LWC","LWP","IWV",  // Atmos names: Liquid water content, water path, int water vapour {19-21}
-			    "STI","CBH","BLH"  // Atmos index: Stability indices, cloud base, PBL heihg {22-24}
+			    "STI","CBH","BLH",  // Atmos index: Stability indices, cloud base, PBL heihg {22-24}
+			    "WET", "QCH"  // Wetting flag, channel quality {25-26}
   };
   
-  indexes[BRTcode] = vector<int>{0,2,3,4,5,6,8};
+  indexes[BRTcode] = vector<int>{0,2,3,4,5,6,8,25,26};
   indexes[ATNcode] = vector<int>{0,2,3,4,5,6,9};
   indexes[WVLcode] = vector<int>{0,2,3,4,5,6,8};
-  indexes[BLBcode] = vector<int>{0,2,3,4,5,6,8};
+  indexes[BLBcode] = vector<int>{0,2,3,4,5,6,8,25,26};
   indexes[HPCcode] = vector<int>{0,1,5,6,7,10,11};
   indexes[TPCcode] = vector<int>{0,1,5,6,7,12};
   indexes[TPBcode] = vector<int>{0,1,5,6,7,12};
@@ -131,14 +132,13 @@ void ShowHelp(unsigned int key){
       "Option 1: To open file browser to select a binary HATPRO file,"<<endl<<
       "> BRT = read_hatpro;"<<endl<<endl<<
       "Option 2: To read a specific given file name as string variable,"<<endl<<
-      "> BRT = read_hatpro('/hatpro/data/Y2018/M09/D20/180920.BRT');"<<endl<<endl<<
-      
+      "> BRT = read_hatpro('/hatpro/data/Y2018/M09/D20/180920.BRT');"<<endl<<
+      "WHERE: BRT is a Matlab structure."<<endl<<endl<<
       "Option 3: To read a set of associated binary files e.g BRT, HPC, TPC, MET"<<endl<<
       "> DAT = read_hatpro('/hatpro/data/Y2018/M09/D20/180920.BRT',{'HPC','TPC','MET'});"<<endl<<
       "WHERE:"<<endl<<
-      "* BRT is a Matlab structure"<<endl<<
-      "* DAT is a cell array, with every cell element corresponds to a structure"<<endl<<
-      "for the corresponding data file."<<endl<<endl;
+      "* DAT is a cell array, with every cell element containing a structure"<<endl<<
+      "for the corresponding data type i.a. HPC, TPC and MET."<<endl<<endl;
 
     break;
   case 2:

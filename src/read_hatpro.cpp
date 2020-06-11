@@ -28,7 +28,8 @@
 #include<vector>
 #include "IOmex_hatpro.h"
 
-using namespace std;
+using std::cout;
+using std::endl;
 
 //int GetInputFile_MWR(vector<string> &);
 
@@ -61,7 +62,11 @@ mxArray *DataFile2MexStruct(const char *FileName){
   float **date;
   date = hatpro::TimeSec2Date(tDims, IsBRT?BRT.TimeSec:PRO.TimeSec);
 
-  for(size_t i=0;i<SU.NFields;++i) cout<<SU.FieldsName[i]<<" ";
+  // Temporal variable for WET and QIDX variables:
+  short *RFI;
+  if(IsBRT) RFI = BRT.FlagTB_RIF_Wet();
+  
+  for(auto i=0; i<SU.NFields; ++i) cout<<SU.FieldsName[i]<<" ";
   cout<<endl;
 
   // Creating the structure to put the set of variable fields:
@@ -83,7 +88,7 @@ mxArray *DataFile2MexStruct(const char *FileName){
     }
 
     // For 1-D variables:
-    if(!strcmp(SU.FieldsName[i],"REF")){
+    if(!strcmp(SU.FieldsName[i],"UTC")){
       xDim=1;
       myID = mxINT32_CLASS;
       pointt = IsBRT?(float *) &BRT.TimeRef:(float *) &PRO.TimeRef;
@@ -105,7 +110,7 @@ mxArray *DataFile2MexStruct(const char *FileName){
       cout<<SU.FieldsName[i]<<" H "<<hDims<<endl;
     }
 
-    if(!strcmp(SU.FieldsName[i],"FRE")){
+    if(!strcmp(SU.FieldsName[i],"FREQ")){
       myID = mxSINGLE_CLASS;
       yDim = fDims;
       pointt = (float *) BRT.Freq;
@@ -113,35 +118,46 @@ mxArray *DataFile2MexStruct(const char *FileName){
 
     // Time depending 1D variables:
     if(!strcmp(SU.FieldsName[i],"TIME")){
-      cout<<SU.FieldsName[i]<<" TIME "<<tDims<<endl;
       myID = mxDOUBLE_CLASS;
       xDim = tDims;
       yDim = 6;
       point2D = date;
     }
     if(!strcmp(SU.FieldsName[i],"RF")){
-      cout<<SU.FieldsName[i]<<" RainFlag"<<endl;
       myID = mxSINGLE_CLASS;
       xDim = tDims;
       pointt = new float[tDims];
-      // temporal for RFI testing:
-      short *RFI;
-      if(IsBRT) RFI = BRT.FlagTB_RIF_Wet();
 
       for(uint t=0; t<tDims; ++t)
-        pointt[t] = IsBRT?(float) (0x01 & RFI[t]):(float) PRO.RF[t];
-	//pointt[t] = IsBRT?(float) BRT.RF[t]:(float) PRO.RF[t];
-
-    if(IsBRT) delete[](RFI);
+	pointt[t] = IsBRT?(float) BRT.RF[t]:(float) PRO.RF[t];
     }
+
+    if(!strcmp(SU.FieldsName[i], "WET")){
+      if(!IsBRT) mexErrMsgTxt("Field WET only allowed for BRT variables");
+      myID = mxSINGLE_CLASS;
+      xDim = tDims;
+      pointt = new float[tDims];
+
+      for(uint t=0; t<tDims; ++t)
+        pointt[t] = (float) (0x01 & RFI[t]);
+    }
+
+    if(!strcmp(SU.FieldsName[i], "QCH")){
+      if(!IsBRT) mexErrMsgTxt("Field QCH only allowed for BRT variables");
+      myID = mxSINGLE_CLASS;
+      xDim = tDims;
+      pointt = new float[tDims];
+      // shift 2 bit right, then select 14 bits for 14 frequencies:
+      for(uint t=0; t<tDims; ++t)
+	pointt[t] =  static_cast<float>(0x3FFF & RFI[t]>>2);
+    }
+    
     if(!strcmp(SU.FieldsName[i],"ELV")){
-      cout<<SU.FieldsName[i]<<" Elevation"<<endl;
       myID = mxSINGLE_CLASS;
       yDim = code==BLBcode? aDims: tDims;
       pointt = IsBRT?BRT.ELV: PRO.ELV;
     }
     if(!strcmp(SU.FieldsName[i],"AZI")){
-      cout<<SU.FieldsName[i]<<" Azimuth"<<endl;
       myID = mxSINGLE_CLASS;
       yDim = code==BLBcode? aDims: tDims;
       pointt = IsBRT?BRT.AZI: PRO.AZI;
@@ -208,7 +224,6 @@ mxArray *DataFile2MexStruct(const char *FileName){
     else if(code==METcode){
       // Special case for the Meteorological variables which are stored
       // at the BRT class within the TB array:
-      cout<<"met variable: "<<SU.FieldsName[i]<<endl;
       TMP  = mxCreateNumericMatrix((mwSize) tDims,(mwSize) 1, mxDOUBLE_CLASS, mxREAL);
 
       for(uint t=0; t<tDims; ++t)
@@ -217,7 +232,7 @@ mxArray *DataFile2MexStruct(const char *FileName){
       cout<<"before struct assigment"<<metaux<<endl;
       metaux++;
     }
-    else mexErrMsgTxt("both pointer are still NULL!!! :O");
+    else mexErrMsgTxt(strcat("Both 1D and 2D pointers are still NULL!!! :O ", SU.FieldsName[i]));
 
     mxSetFieldByNumber(stru,0,i,TMP);
 
@@ -226,6 +241,8 @@ mxArray *DataFile2MexStruct(const char *FileName){
   } // end of NFields loop...
 
   delete[] date;
+  if(IsBRT) delete[](RFI);
+  
   return(stru);
 }   // End of Template Struct
 // --
