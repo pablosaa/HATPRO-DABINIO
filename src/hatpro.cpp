@@ -136,8 +136,11 @@ short *hatpro::BRT_var::FlagTB_RIF_Wet(){
 
     // Checking first whether this function can be applied:
     // This function is only viable to BRT and BLB files.
-    if(code!=BRTcode && code!=BLBcode) return NULL;
-
+  if(code!=BRTcode && code!=(BRTcode-1) && code!=BLBcode) {
+    cout<<"WARNING: FlatTB_RIF_Wet() function was called from a non ";
+    cout<<"brightness temperature data file. Returned NULL!"<<endl;
+    return NULL;
+  }
     // Retrieving in-house binary TB base and thresholds
     // stored in TBhat_threshold.dat binary file and linked
     // as > ld -r -b binary -o TBhat_threshold.o TBhat_threshold.dat

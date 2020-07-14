@@ -72,7 +72,8 @@ mxArray *DataFile2MexStruct(const char *FileName){
   // Creating the structure to put the set of variable fields:
   mxArray *stru = mxCreateStructMatrix(1, 1, SU.NFields, (const char **) SU.FieldsName);
 
-  for(size_t i=0;i<SU.NFields;++i){
+  for(size_t i=0; i<SU.NFields; ++i){
+
     mxClassID  myID = mxDOUBLE_CLASS;
     uint xDim=1, yDim=1, zDim=1;   // temporal dimensions
     mxArray *TMP = NULL;
